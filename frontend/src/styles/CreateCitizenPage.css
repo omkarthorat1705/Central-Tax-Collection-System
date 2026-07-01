@@ -1,0 +1,247 @@
+/* ==========================================
+   CITIZEN REGISTRATION PAGE
+========================================== */
+
+.citizen-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ==========================================
+   HEADER
+========================================== */
+
+.citizen-header {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.02)
+  );
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  border-radius: 24px;
+
+  backdrop-filter: blur(18px);
+
+  padding: 28px 32px;
+}
+
+.citizen-title {
+  color: white;
+  font-size: clamp(1.8rem, 2vw, 2.4rem);
+  font-weight: 700;
+}
+
+.citizen-subtitle {
+  color: #94a3b8;
+  margin-top: 8px;
+  line-height: 1.7;
+}
+
+/* ==========================================
+   BODY
+========================================== */
+
+.citizen-body {
+  display: grid;
+
+  grid-template-columns: minmax(0, 1fr) 340px;
+
+  gap: 24px;
+
+  align-items: start;
+}
+
+.citizen-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.citizen-summary {
+  position: sticky;
+  top: 24px;
+}
+
+/* ==========================================
+   ENTERPRISE STEPPER
+========================================== */
+
+.enterprise-stepper {
+  width: 100%;
+}
+
+.enterprise-stepper .MuiStepLabel-label {
+  color: #94a3b8 !important;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.enterprise-stepper .Mui-active .MuiStepLabel-label {
+  color: white !important;
+}
+
+.enterprise-stepper .Mui-completed .MuiStepLabel-label {
+  color: #22c55e !important;
+}
+
+.enterprise-stepper .MuiStepIcon-root {
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.enterprise-stepper .MuiStepIcon-root.Mui-active {
+  color: #2f67f6;
+}
+
+.enterprise-stepper .MuiStepIcon-root.Mui-completed {
+  color: #22c55e;
+}
+
+/* ==========================================
+   PREMIUM INPUTS
+========================================== */
+
+.MuiTextField-root {
+  width: 100%;
+}
+
+.MuiOutlinedInput-root {
+  color: white !important;
+
+  border-radius: 16px !important;
+
+  background: rgba(255, 255, 255, 0.02);
+
+  transition: all 0.25s ease;
+}
+
+.MuiOutlinedInput-root fieldset {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.MuiOutlinedInput-root:hover fieldset {
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: #2f67f6 !important;
+
+  box-shadow: 0 0 0 3px rgba(47, 103, 246, 0.15);
+}
+
+.MuiInputLabel-root {
+  color: #94a3b8 !important;
+}
+
+.MuiInputLabel-root.Mui-focused {
+  color: #60a5fa !important;
+}
+
+.MuiInputBase-input::placeholder {
+  color: #64748b;
+  opacity: 1;
+}
+
+/* ==========================================
+   CHECKBOXES
+========================================== */
+
+.MuiFormControlLabel-label {
+  color: white !important;
+}
+
+.MuiCheckbox-root {
+  color: #64748b !important;
+}
+
+.MuiCheckbox-root.Mui-checked {
+  color: #2f67f6 !important;
+}
+
+/* ==========================================
+   BUTTONS
+========================================== */
+
+.step-footer {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-top: 16px;
+}
+
+.step-footer .MuiButton-root {
+  border-radius: 14px;
+
+  text-transform: none;
+
+  font-weight: 600;
+
+  min-width: 140px;
+
+  height: 46px;
+}
+
+.step-footer .MuiButton-contained {
+  background: linear-gradient(90deg, #2563eb, #3057d5);
+}
+
+.step-footer .MuiButton-contained:hover {
+  background: linear-gradient(90deg, #1d4ed8, #2949b8);
+}
+
+/* ==========================================
+   REVIEW BLOCK
+========================================== */
+
+.review-json {
+  background: rgba(255, 255, 255, 0.04);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  border-radius: 18px;
+
+  padding: 20px;
+
+  color: white;
+
+  overflow: auto;
+
+  font-size: 13px;
+
+  line-height: 1.8;
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width: 1200px) {
+  .citizen-body {
+    grid-template-columns: 1fr;
+  }
+
+  .citizen-summary {
+    position: relative;
+    top: unset;
+  }
+}
+
+@media (max-width: 768px) {
+  .citizen-header {
+    padding: 20px;
+  }
+
+  .step-footer {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .step-footer .MuiButton-root {
+    width: 100%;
+  }
+}

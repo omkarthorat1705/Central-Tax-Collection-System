@@ -1,0 +1,28 @@
+.demands-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.demands-header h2 {
+  margin: 0;
+}
+
+.demands-table-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.demands-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.demands-table th,
+.demands-table td {
+  padding: 14px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}

@@ -1,0 +1,24 @@
+.enterprise-stepper {
+  margin-bottom: 32px;
+}
+
+.enterprise-stepper .MuiStepLabel-label {
+  color: #cbd5e1 !important;
+  font-weight: 600;
+}
+
+.enterprise-stepper .Mui-active {
+  color: white !important;
+}
+
+.enterprise-stepper .MuiStepIcon-root {
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.enterprise-stepper .MuiStepIcon-root.Mui-active {
+  color: #2f67f6;
+}
+
+.enterprise-stepper .MuiStepIcon-root.Mui-completed {
+  color: #22c55e;
+}

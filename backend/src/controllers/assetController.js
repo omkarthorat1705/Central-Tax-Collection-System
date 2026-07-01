@@ -1,0 +1,50 @@
+const assetService = require("../services/assetService");
+const asyncHandler = require("../utils/asyncHandler");
+
+const { successResponse } = require("../utils/responseHandler");
+
+const getAssets = asyncHandler(async (req, res) => {
+  const data = await assetService.getAssets(req.tenant.tenant_id);
+
+  return successResponse(res, data);
+});
+
+const getAssetById = asyncHandler(async (req, res) => {
+  const data = await assetService.getAssetById(
+    req.params.id,
+    req.tenant.tenant_id,
+  );
+
+  return successResponse(res, data);
+});
+
+const registerAsset = asyncHandler(async (req, res) => {
+  const result = await assetService.registerAsset({
+    ...req.body,
+    tenant_id: req.tenant.tenant_id,
+  });
+
+  return successResponse(res, result);
+});
+
+const getAssetTypes = asyncHandler(
+  async (req, res) => {
+    const data =
+      await assetService.getAssetTypes(
+        req.tenant.tenant_id
+      );
+
+    const {
+      successResponse,
+    } = require("../utils/responseHandler");
+
+    return successResponse(res, data);
+  }
+);
+
+module.exports = {
+  getAssets,
+  getAssetById,
+  registerAsset,
+  getAssetTypes,
+};

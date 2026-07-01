@@ -1,0 +1,16 @@
+.enterprise-grid {
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.enterprise-grid .MuiDataGrid-columnHeaders {
+  background: #16233d;
+}
+
+.enterprise-grid .MuiDataGrid-row {
+  transition: 0.2s;
+}
+
+.enterprise-grid .MuiDataGrid-row:hover {
+  background: rgba(47, 103, 246, 0.12);
+}

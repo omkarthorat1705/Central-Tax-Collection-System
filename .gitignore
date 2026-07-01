@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build folders
+build/
+dist/
+
+# Coverage
+coverage/
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# SQLite temporary files
+*.sqlite-journal
+*.db-journal
+
+# Runtime logs
+logs/
+*.log

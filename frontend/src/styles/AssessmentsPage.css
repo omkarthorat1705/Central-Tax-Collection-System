@@ -1,0 +1,48 @@
+.assessments-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.assessment-card {
+  background: white;
+  padding: 24px;
+  border-radius: 14px;
+}
+
+.dynamic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-group input,
+.field-group select {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #dbe1ea;
+}
+
+.assessment-actions {
+  margin-top: 24px;
+}
+
+.assessment-result {
+  margin-top: 30px;
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 14px;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}

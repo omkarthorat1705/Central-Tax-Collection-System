@@ -1,0 +1,99 @@
+.citizen-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.citizen-header {
+  margin-bottom: 8px;
+}
+
+.citizen-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+}
+
+.citizen-subtitle {
+  color: #94a3b8;
+  margin-top: 6px;
+}
+
+.citizen-body {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+.citizen-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.citizen-summary {
+  position: sticky;
+  top: 20px;
+}
+
+.step-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.footer-right {
+  display: flex;
+  gap: 12px;
+}
+
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.review-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.review-card h4 {
+  color: white;
+  margin-bottom: 12px;
+}
+
+.review-card p {
+  color: #cbd5e1;
+  margin: 6px 0;
+}
+
+@media (max-width: 1200px) {
+  .citizen-body {
+    grid-template-columns: 1fr;
+  }
+
+  .citizen-summary {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .review-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .step-footer {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .footer-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

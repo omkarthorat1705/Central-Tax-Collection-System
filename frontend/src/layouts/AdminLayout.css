@@ -1,0 +1,237 @@
+/* ==========================================
+   GLOBAL ENTERPRISE ADMIN LAYOUT
+========================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: clamp(14px, 0.85vw, 16px);
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background: #06152f;
+  font-family: Inter, sans-serif;
+}
+
+/* ==========================================
+   MAIN LAYOUT
+========================================== */
+
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #06152f;
+}
+
+.admin-sidebar {
+  width: clamp(220px, 14vw, 280px);
+  flex-shrink: 0;
+  background: #081a38;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================
+   HEADER
+========================================== */
+
+.admin-header {
+  height: clamp(70px, 5vw, 90px);
+
+  padding-inline: clamp(20px, 2vw, 40px);
+
+  display: flex;
+  align-items: center;
+
+  background: #081a38;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.page-title {
+  color: white;
+  font-size: clamp(1.5rem, 2vw, 2.4rem);
+  font-weight: 700;
+}
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2vw, 36px);
+}
+
+.tenant-name,
+.user-name {
+  color: white;
+  font-size: clamp(0.95rem, 1vw, 1.1rem);
+  font-weight: 700;
+}
+
+.tenant-code,
+.user-role {
+  color: #94a3b8;
+  font-size: clamp(0.75rem, 0.8vw, 0.9rem);
+}
+
+/* ==========================================
+   CONTENT
+========================================== */
+
+.admin-content {
+  flex: 1;
+
+  padding: clamp(20px, 2vw, 40px);
+
+  overflow-x: hidden;
+}
+
+/* ==========================================
+   SIDEBAR
+========================================== */
+
+.sidebar-container {
+  height: 100%;
+}
+
+.sidebar-logo {
+  padding: clamp(24px, 2vw, 36px);
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-logo-image {
+  width: clamp(70px, 5vw, 100px);
+  height: auto;
+}
+
+.sidebar-logo h2 {
+  color: white;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-size: clamp(2rem, 2vw, 3rem);
+}
+
+.sidebar-logo span {
+  color: #94a3b8;
+  font-size: clamp(0.8rem, 0.9vw, 1rem);
+}
+
+.sidebar-menu {
+  padding: 20px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  text-decoration: none;
+
+  color: #cbd5e1;
+
+  padding: 16px 18px;
+
+  border-radius: 18px;
+
+  margin-bottom: 10px;
+
+  transition: all 0.25s ease;
+}
+
+.sidebar-link span {
+  font-size: clamp(0.95rem, 1vw, 1.15rem);
+}
+
+.sidebar-link:hover {
+  transform: translateX(4px);
+
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sidebar-link.active {
+  background: #2f67f6;
+  color: white;
+}
+
+/* ==========================================
+   ENTERPRISE CARDS
+========================================== */
+
+.enterprise-card {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.02)
+  );
+
+  border-radius: 24px;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  backdrop-filter: blur(16px);
+
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+
+  padding: clamp(20px, 2vw, 32px);
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width: 1200px) {
+  .admin-sidebar {
+    width: 220px;
+  }
+}
+
+@media (max-width: 992px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+  }
+
+  .sidebar-menu {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .sidebar-link {
+    min-width: max-content;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-header {
+    flex-direction: column;
+    height: auto;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+}
