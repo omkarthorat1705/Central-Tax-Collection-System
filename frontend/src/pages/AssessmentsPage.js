@@ -1,176 +1,193 @@
 import React, { useEffect, useState } from "react";
-
+import { useParams } from "react-router-dom";
+import {
+  Box,
+  Button,
+  Chip,
+  Grid,
+  MenuItem,
+  TextField,
+  Typography,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import AdminLayout from "../layouts/AdminLayout";
+import AdminSidebar from "../components/AdminSidebar";
+import EnterpriseSectionCard from "../components/enterprise/EnterpriseSectionCard";
 import API from "../api/api";
-
-import "../styles/AssessmentsPage.css";
 
 const AssessmentsPage = () => {
   const [assets, setAssets] = useState([]);
-
   const [selectedAsset, setSelectedAsset] = useState("");
-
   const [financialYear, setFinancialYear] = useState("2026-2027");
-
   const [generatedAssessments, setGeneratedAssessments] = useState([]);
-
-  // ====================================
-  // LOAD ASSETS
-  // ====================================
+  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { assetId } = useParams();
 
   const loadAssets = async () => {
     try {
       const response = await API.get("/getAssets");
-
       setAssets(response.data.data || []);
     } catch (error) {
       console.error(error);
     }
   };
 
-  // ====================================
-  // LOAD ASSESSMENTS
-  // ====================================
-
   const loadAssessments = async () => {
     try {
+      setLoading(true);
       const response = await API.get("/getAssessments");
-
       setGeneratedAssessments(response.data.data || []);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     loadAssets();
-
     loadAssessments();
   }, []);
 
-  // ====================================
-  // GENERATE ASSESSMENT
-  // ====================================
+  useEffect(() => {
+    if (assetId) {
+      setSelectedAsset(assetId);
+    }
+  }, [assetId]);
 
   const generateAssessment = async () => {
+    if (!selectedAsset) {
+      alert("Please select an asset first.");
+      return;
+    }
+
     try {
+      setSubmitting(true);
       await API.post("/generateAssessment", {
         asset_id: selectedAsset,
-
         financial_year: financialYear,
       });
-
-      alert("Assessment Generated Successfully");
-
-      loadAssessments();
+      await loadAssessments();
+      setSelectedAsset("");
+      alert("Assessment generated successfully");
     } catch (error) {
       console.error(error);
+      alert("Failed to generate assessment");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="assessments-page">
-      <div className="page-header">
-        <h2>Tax Assessments</h2>
+    <AdminLayout sidebar={<AdminSidebar />} pageTitle="Assessments">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <Box>
+          <Typography variant="h4" sx={{ color: "white", fontWeight: 700 }}>
+            Assessment Management
+          </Typography>
+          <Typography sx={{ color: "#94a3b8", mt: 1 }}>
+            Generate and review assessments for registered assets.
+          </Typography>
+        </Box>
 
-        <p>Frozen yearly taxation generation engine.</p>
-      </div>
+        <EnterpriseSectionCard title="Generate Assessment" subtitle="Create a fresh assessment for an asset and financial year.">
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                select
+                fullWidth
+                label="Asset *"
+                value={selectedAsset}
+                onChange={(event) => setSelectedAsset(event.target.value)}
+              >
+                {assets.map((asset) => (
+                  <MenuItem key={asset.id} value={asset.id}>
+                    {asset.asset_code || asset.id} - {asset.asset_name || "Unnamed Asset"}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                select
+                fullWidth
+                label="Financial Year"
+                value={financialYear}
+                onChange={(event) => setFinancialYear(event.target.value)}
+              >
+                <MenuItem value="2025-2026">2025-2026</MenuItem>
+                <MenuItem value="2026-2027">2026-2027</MenuItem>
+                <MenuItem value="2027-2028">2027-2028</MenuItem>
+              </TextField>
+            </Grid>
+          </Grid>
 
-      {/* ================================= */}
-      {/* GENERATE */}
-      {/* ================================= */}
-
-      <div className="assessment-card">
-        <div className="assessment-grid">
-          <div className="field-group">
-            <label>Select Asset</label>
-
-            <select
-              value={selectedAsset}
-              onChange={(e) => setSelectedAsset(e.target.value)}
+          <Box sx={{ mt: 2 }}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={generateAssessment}
+              disabled={submitting}
             >
-              <option value="">Select Asset</option>
+              {submitting ? "Generating..." : "Generate Assessment"}
+            </Button>
+          </Box>
+        </EnterpriseSectionCard>
 
-              {assets.map((asset) => (
-                <option key={asset.id} value={asset.id}>
-                  {asset.asset_code} - {asset.asset_name}
-                </option>
-              ))}
-            </select>
-          </div>
+        <EnterpriseSectionCard title="Assessment Ledger" subtitle="Recent assessments created across the system.">
+          <Grid container spacing={2}>
+            {loading ? (
+              <Grid size={12}>
+                <Typography color="text.secondary">Loading assessments...</Typography>
+              </Grid>
+            ) : generatedAssessments.length === 0 ? (
+              <Grid size={12}>
+                <Typography color="text.secondary">No assessments found yet.</Typography>
+              </Grid>
+            ) : (
+              generatedAssessments.map((item) => (
+                <Grid size={{ xs: 12, md: 6 }} key={item.id}>
+                  <Box
+                    sx={{
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 3,
+                      p: 2.5,
+                      background: "rgba(255,255,255,0.04)",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
+                      <Box>
+                        <Typography sx={{ color: "#fff", fontWeight: 700 }}>
+                          {item.assessment_number || `ASM-${item.id}`}
+                        </Typography>
+                        <Typography sx={{ color: "#94a3b8", fontSize: 13, mt: 0.5 }}>
+                          {item.asset_name || item.asset_code || "Asset"} • {item.financial_year || "—"}
+                        </Typography>
+                      </Box>
+                      <Chip label={item.assessment_status || "GENERATED"} color="success" size="small" />
+                    </Box>
 
-          <div className="field-group">
-            <label>Financial Year</label>
-
-            <select
-              value={financialYear}
-              onChange={(e) => setFinancialYear(e.target.value)}
-            >
-              <option value="2025-2026">2025-2026</option>
-
-              <option value="2026-2027">2026-2027</option>
-
-              <option value="2027-2028">2027-2028</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="assessment-actions">
-          <button className="primary-btn" onClick={generateAssessment}>
-            Generate Assessment
-          </button>
-        </div>
-      </div>
-
-      {/* ================================= */}
-      {/* TABLE */}
-      {/* ================================= */}
-
-      <div className="assessment-table-card">
-        <table className="assessment-table">
-          <thead>
-            <tr>
-              <th>#</th>
-
-              <th>Assessment No</th>
-
-              <th>Asset</th>
-
-              <th>Financial Year</th>
-
-              <th>Calculated</th>
-
-              <th>Arrears</th>
-
-              <th>Total</th>
-
-              <th>Status</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {generatedAssessments.map((item, index) => (
-              <tr key={item.id}>
-                <td>{index + 1}</td>
-
-                <td>{item.assessment_number}</td>
-
-                <td>{item.asset_name}</td>
-
-                <td>{item.financial_year}</td>
-
-                <td>₹ {item.calculated_amount}</td>
-
-                <td>₹ {item.arrears_amount}</td>
-
-                <td>₹ {item.total_amount}</td>
-
-                <td>{item.assessment_status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                    <Typography sx={{ color: "#94a3b8", mt: 2 }}>
+                      Tax: {item.tax_name || "—"}
+                    </Typography>
+                    <Typography sx={{ color: "#94a3b8" }}>
+                      Citizen: {item.citizen_name || "—"}
+                    </Typography>
+                    <Typography sx={{ color: "#94a3b8" }}>
+                      Calculated: ₹{Number(item.calculated_amount || 0).toFixed(2)} • Arrears: ₹{Number(item.arrears_amount || 0).toFixed(2)}
+                    </Typography>
+                    <Typography sx={{ color: "#94a3b8" }}>
+                      Total: ₹{Number(item.total_amount || 0).toFixed(2)}
+                    </Typography>
+                  </Box>
+                </Grid>
+              ))
+            )}
+          </Grid>
+        </EnterpriseSectionCard>
+      </Box>
+    </AdminLayout>
   );
 };
 

@@ -1,304 +1,221 @@
 import { useEffect, useState } from "react";
+import {
+  Box,
+  Button,
+  Chip,
+  Checkbox,
+  FormControlLabel,
+  Grid,
+  MenuItem,
+  TextField,
+  Typography,
+} from "@mui/material";
+
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+
+import AdminLayout from "../layouts/AdminLayout";
+import AdminSidebar from "../components/AdminSidebar";
+import EnterpriseSectionCard from "../components/enterprise/EnterpriseSectionCard";
 
 import API from "../api/api";
-
-import "../styles/ParametersPage.css";
 import { useTaxContext } from "../context/TaxContext";
 
 export default function ParametersPage() {
   const [parameters, setParameters] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     tax_type_id: "",
-
     parameter_code: "",
-
     parameter_name: "",
-
-    data_type: "text",
-
-    ui_type: "input",
-
+    parameter_type: "text",
+    ui_component: "TEXTFIELD",
     possible_values: "",
-
-    default_value: "",
-
-    validation_rule: "",
-
+    validation_rules: "",
     required_flag: 0,
-
     display_order: 1,
+    asset_type: "",
   });
 
-  // ================================
-  // LOAD INITIAL DATA
-  // ================================
+  const { taxTypes, loadTaxTypes } = useTaxContext();
 
   const loadData = async () => {
     try {
-      const paramRes = await API.get("/getParameters");
-      setParameters(paramRes.data.data || []);
+      const response = await API.get("/getParameters");
+      setParameters(response.data.data || []);
     } catch (error) {
       console.error(error);
     }
   };
-
-  const { taxTypes } = useTaxContext();
 
   useEffect(() => {
     loadData();
+    loadTaxTypes();
+  }, [loadData, loadTaxTypes]);
 
-    const refreshHandler = () => {
-      loadData();
-    };
-
-    window.addEventListener("taxTypesUpdated", refreshHandler);
-
-    return () => {
-      window.removeEventListener("taxTypesUpdated", refreshHandler);
-    };
-  }, []);
-
-  // ================================
-  // HANDLE INPUT
-  // ================================
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    setFormData({
-      ...formData,
-
+  const handleChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    setFormData((prev) => ({
+      ...prev,
       [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
-    });
+    }));
   };
 
-  // ================================
-  // ADD PARAMETER
-  // ================================
-
   const handleAdd = async () => {
-    try {
-      await API.post("/addParameter", formData);
+    if (!formData.tax_type_id || !formData.parameter_name?.trim()) {
+      alert("Tax type and parameter name are required");
+      return;
+    }
 
+    try {
+      setSubmitting(true);
+      await API.post("/addParameter", formData);
       setFormData({
         tax_type_id: "",
-
         parameter_code: "",
-
         parameter_name: "",
-
-        data_type: "text",
-
-        ui_type: "input",
-
+        parameter_type: "text",
+        ui_component: "TEXTFIELD",
         possible_values: "",
-
-        default_value: "",
-
-        validation_rule: "",
-
+        validation_rules: "",
         required_flag: 0,
-
         display_order: 1,
+        asset_type: "",
       });
-
       await loadData();
     } catch (error) {
       console.error(error);
+      alert("Failed to add parameter");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // ================================
-  // DELETE
-  // ================================
-
   const handleDelete = async (id) => {
     try {
+      setLoading(true);
       await API.delete(`/deleteParameter/${id}`);
-
-      loadData();
+      await loadData();
     } catch (error) {
       console.error(error);
+      alert("Failed to delete parameter");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="param-page">
-      <div className="page-title">
-        <h2>Parameters Engine</h2>
+    <AdminLayout sidebar={<AdminSidebar />} pageTitle="Parameters">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <Box>
+          <Typography variant="h4" sx={{ color: "white", fontWeight: 700 }}>
+            Parameter Management
+          </Typography>
+          <Typography sx={{ color: "#94a3b8", mt: 1 }}>
+            Define reusable assessment parameters for each tax type.
+          </Typography>
+        </Box>
 
-        <p>Configure metadata-driven taxation parameters.</p>
-      </div>
+        <EnterpriseSectionCard title="Add Parameter" subtitle="Create a new parameter for assessment and tax calculation.">
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField select fullWidth label="Tax Type *" name="tax_type_id" value={formData.tax_type_id} onChange={handleChange}>
+                {taxTypes.map((tax) => (
+                  <MenuItem key={tax.id} value={tax.id}>
+                    {tax.tax_name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField fullWidth label="Parameter Code" name="parameter_code" value={formData.parameter_code} onChange={handleChange} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField fullWidth label="Parameter Name *" name="parameter_name" value={formData.parameter_name} onChange={handleChange} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField select fullWidth label="Parameter Type" name="parameter_type" value={formData.parameter_type} onChange={handleChange}>
+                <MenuItem value="text">Text</MenuItem>
+                <MenuItem value="number">Number</MenuItem>
+                <MenuItem value="date">Date</MenuItem>
+                <MenuItem value="boolean">Boolean</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField select fullWidth label="UI Component" name="ui_component" value={formData.ui_component} onChange={handleChange}>
+                <MenuItem value="TEXTFIELD">Text Field</MenuItem>
+                <MenuItem value="DROPDOWN">Dropdown</MenuItem>
+                <MenuItem value="CHECKBOX">Checkbox</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField fullWidth label="Possible Values" name="possible_values" value={formData.possible_values} onChange={handleChange} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField fullWidth label="Validation Rules" name="validation_rules" value={formData.validation_rules} onChange={handleChange} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField fullWidth type="number" label="Display Order" name="display_order" value={formData.display_order} onChange={handleChange} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField fullWidth label="Asset Type" name="asset_type" value={formData.asset_type} onChange={handleChange} />
+            </Grid>
+          </Grid>
 
-      {/* ========================= */}
-      {/* FORM */}
-      {/* ========================= */}
-
-      <div className="param-form-card">
-        <div className="param-grid">
-          <select
-            name="tax_type_id"
-            value={formData.tax_type_id}
-            onChange={handleChange}
-          >
-            <option value="">Select Tax Type</option>
-
-            {taxTypes.map((tax) => (
-              <option key={tax.id} value={tax.id}>
-                {tax.tax_name}
-              </option>
-            ))}
-          </select>
-
-          <input
-            type="text"
-            name="parameter_code"
-            placeholder="Parameter Code"
-            value={formData.parameter_code}
-            onChange={handleChange}
+          <FormControlLabel
+            control={<Checkbox checked={formData.required_flag === 1} name="required_flag" onChange={handleChange} />}
+            label="Required Parameter"
+            sx={{ mt: 2 }}
           />
 
-          <input
-            type="text"
-            name="parameter_name"
-            placeholder="Parameter Name"
-            value={formData.parameter_name}
-            onChange={handleChange}
-          />
+          <Box sx={{ mt: 2 }}>
+            <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd} disabled={submitting}>
+              {submitting ? "Saving..." : "Add Parameter"}
+            </Button>
+          </Box>
+        </EnterpriseSectionCard>
 
-          <select
-            name="data_type"
-            value={formData.data_type}
-            onChange={handleChange}
-          >
-            <option value="text">Text</option>
-
-            <option value="number">Number</option>
-
-            <option value="date">Date</option>
-
-            <option value="boolean">Boolean</option>
-          </select>
-
-          <select
-            name="ui_type"
-            value={formData.ui_type}
-            onChange={handleChange}
-          >
-            <option value="input">Input</option>
-
-            <option value="dropdown">Dropdown</option>
-
-            <option value="radio">Radio</option>
-          </select>
-
-          <input
-            type="text"
-            name="possible_values"
-            placeholder="Possible Values"
-            value={formData.possible_values}
-            onChange={handleChange}
-          />
-
-          <input
-            type="text"
-            name="default_value"
-            placeholder="Default Value"
-            value={formData.default_value}
-            onChange={handleChange}
-          />
-
-          <input
-            type="text"
-            name="validation_rule"
-            placeholder="Validation Rule"
-            value={formData.validation_rule}
-            onChange={handleChange}
-          />
-
-          <input
-            type="number"
-            name="display_order"
-            placeholder="Display Order"
-            value={formData.display_order}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="checkbox-row">
-          <label>
-            <input
-              type="checkbox"
-              name="required_flag"
-              checked={formData.required_flag === 1}
-              onChange={handleChange}
-            />
-            Required Parameter
-          </label>
-        </div>
-
-        <button className="primary-btn" onClick={handleAdd}>
-          Add Parameter
-        </button>
-      </div>
-
-      {/* ========================= */}
-      {/* TABLE */}
-      {/* ========================= */}
-
-      <div className="param-table-card">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-
-              <th>Tax Type</th>
-
-              <th>Code</th>
-
-              <th>Name</th>
-
-              <th>Data Type</th>
-
-              <th>UI Type</th>
-
-              <th>Required</th>
-
-              <th>Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {parameters.map((item, index) => (
-              <tr key={item.id}>
-                <td>{index + 1}</td>
-
-                <td>{item.tax_name}</td>
-
-                <td>{item.parameter_code}</td>
-
-                <td>{item.parameter_name}</td>
-
-                <td>{item.data_type}</td>
-
-                <td>{item.ui_type}</td>
-
-                <td>{item.required_flag ? "YES" : "NO"}</td>
-
-                <td>
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDelete(item.id)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+        <EnterpriseSectionCard title="Existing Parameters" subtitle="Configured parameter definitions available across the system.">
+          <Grid container spacing={2}>
+            {parameters.length === 0 ? (
+              <Grid size={12}>
+                <Typography color="text.secondary">No parameters found.</Typography>
+              </Grid>
+            ) : (
+              parameters.map((item) => (
+                <Grid size={{ xs: 12, md: 6 }} key={item.id}>
+                  <Box sx={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: 3, p: 2.5, background: "rgba(255,255,255,0.04)" }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
+                      <Box>
+                        <Typography sx={{ color: "#fff", fontWeight: 700 }}>
+                          {item.parameter_name}
+                        </Typography>
+                        <Typography sx={{ color: "#94a3b8", fontSize: 13, mt: 0.5 }}>
+                          {item.parameter_code || "—"}
+                        </Typography>
+                      </Box>
+                      <Chip label={item.required_flag ? "Required" : "Optional"} color={item.required_flag ? "warning" : "default"} size="small" />
+                    </Box>
+                    <Typography sx={{ color: "#94a3b8", mt: 2 }}>
+                      Tax Type: {item.tax_type_id || "—"}
+                    </Typography>
+                    <Typography sx={{ color: "#94a3b8" }}>
+                      Type: {item.parameter_type || "text"}
+                    </Typography>
+                    <Box sx={{ mt: 2 }}>
+                      <Button color="error" variant="outlined" startIcon={<DeleteIcon />} onClick={() => handleDelete(item.id)} disabled={loading}>
+                        {loading ? "Deleting..." : "Delete"}
+                      </Button>
+                    </Box>
+                  </Box>
+                </Grid>
+              ))
+            )}
+          </Grid>
+        </EnterpriseSectionCard>
+      </Box>
+    </AdminLayout>
   );
 }

@@ -7,6 +7,8 @@ const {
   validateGenerateAssessment,
 } = require("../validators/assessmentValidator");
 
+router.get("/getAssessments", assessmentController.listAssessments);
+
 router.post(
   "/generateAssessment",
   validateGenerateAssessment,

@@ -104,6 +104,11 @@ const makePayment = async (payload, tenantId) => {
   }
 };
 
+const listPayments = async (tenantId) => {
+  return paymentRepository.getPayments(tenantId);
+};
+
 module.exports = {
   makePayment,
+  listPayments,
 };

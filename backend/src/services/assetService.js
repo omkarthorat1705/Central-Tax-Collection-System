@@ -45,6 +45,17 @@ const registerAsset = async (payload) => {
   };
 };
 
+const updateAsset = async (assetId, payload, tenantId) => {
+  await assetRepository.updateAsset(assetId, {
+    ...payload,
+    tenant_id: tenantId,
+  });
+
+  return {
+    asset_id: assetId,
+  };
+};
+
 const getAssetTypes = async (tenantId) => {
   return await assetRepository.getAssetTypes(tenantId);
 };
@@ -53,5 +64,6 @@ module.exports = {
   getAssets,
   getAssetById,
   registerAsset,
+  updateAsset,
   getAssetTypes,
 };

@@ -1,6 +1,8 @@
 const {
   createAssessment,
   getAssessmentById,
+  getAssessments,
+  getAssetById,
 } = require("../repositories/assessmentRepository");
 
 const { createAuditLog } = require("./auditService");
@@ -17,24 +19,34 @@ const generateAssessment = async (payload, tenantId) => {
       generated_by,
     } = payload;
 
-    const total_amount =
-      Number(calculated_amount || 0) + Number(arrears_amount || 0);
+    const selectedAssetId = asset_id;
+    const assetRecord = selectedAssetId
+      ? await getAssetById(selectedAssetId, tenantId)
+      : null;
+
+    const resolvedCitizenId = citizen_id || assetRecord?.citizen_id || null;
+    const resolvedTaxTypeId = tax_type_id || null;
+    const resolvedCalculatedAmount =
+      calculated_amount != null ? Number(calculated_amount) : 0;
+    const resolvedArrearsAmount =
+      arrears_amount != null ? Number(arrears_amount) : 0;
+    const total_amount = resolvedCalculatedAmount + resolvedArrearsAmount;
 
     const assessment_number = "ASM-" + Date.now();
 
     const assessmentData = {
       tenant_id: tenantId,
-      citizen_id,
-      asset_id,
-      tax_type_id,
+      citizen_id: resolvedCitizenId,
+      asset_id: selectedAssetId,
+      tax_type_id: resolvedTaxTypeId,
       financial_year,
       assessment_number,
       assessment_date: new Date().toISOString(),
-      calculated_amount,
-      arrears_amount,
+      calculated_amount: resolvedCalculatedAmount,
+      arrears_amount: resolvedArrearsAmount,
       total_amount,
-      generated_by,
-      assessment_status: "PENDING",
+      generated_by: generated_by || 1,
+      assessment_status: "GENERATED",
       is_deleted: 0,
     };
 
@@ -77,6 +89,11 @@ const generateAssessment = async (payload, tenantId) => {
   }
 };
 
+const listAssessments = async (tenantId) => {
+  return getAssessments(tenantId);
+};
+
 module.exports = {
   generateAssessment,
+  listAssessments,
 };

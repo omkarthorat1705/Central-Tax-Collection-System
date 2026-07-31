@@ -1,189 +1,192 @@
 import React, { useEffect, useState } from "react";
-
+import {
+  Box,
+  Button,
+  Chip,
+  Grid,
+  MenuItem,
+  TextField,
+  Typography,
+} from "@mui/material";
+import PaymentsIcon from "@mui/icons-material/Payments";
+import AdminLayout from "../layouts/AdminLayout";
+import AdminSidebar from "../components/AdminSidebar";
+import EnterpriseSectionCard from "../components/enterprise/EnterpriseSectionCard";
 import API from "../api/api";
-
-import "../styles/PaymentsPage.css";
 
 const PaymentsPage = () => {
   const [assessments, setAssessments] = useState([]);
-
   const [selectedAssessment, setSelectedAssessment] = useState("");
-
   const [paymentAmount, setPaymentAmount] = useState("");
-
   const [paymentMode, setPaymentMode] = useState("CASH");
-
   const [payments, setPayments] = useState([]);
-
-  // =====================================
-  // LOAD ASSESSMENTS
-  // =====================================
+  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const loadAssessments = async () => {
     try {
       const response = await API.get("/getAssessments");
-
       setAssessments(response.data.data || []);
     } catch (error) {
       console.error(error);
     }
   };
 
-  // =====================================
-  // LOAD PAYMENTS
-  // =====================================
-
   const loadPayments = async () => {
     try {
+      setLoading(true);
       const response = await API.get("/getPayments");
-
       setPayments(response.data.data || []);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     loadAssessments();
-
     loadPayments();
   }, []);
 
-  // =====================================
-  // MAKE PAYMENT
-  // =====================================
-
   const makePayment = async () => {
+    if (!selectedAssessment || !paymentAmount) {
+      alert("Please choose an assessment and payment amount.");
+      return;
+    }
+
     try {
+      setSubmitting(true);
       await API.post("/makePayment", {
         assessment_id: selectedAssessment,
-
         payment_amount: paymentAmount,
-
         payment_mode: paymentMode,
       });
-
-      alert("Payment Collected Successfully");
-
       setPaymentAmount("");
-
-      loadPayments();
-
-      loadAssessments();
+      setSelectedAssessment("");
+      await loadPayments();
+      await loadAssessments();
+      alert("Payment collected successfully");
     } catch (error) {
       console.error(error);
+      alert("Failed to collect payment");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="payments-page">
-      <div className="page-header">
-        <h2>Revenue Collections</h2>
+    <AdminLayout sidebar={<AdminSidebar />} pageTitle="Payments">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <Box>
+          <Typography variant="h4" sx={{ color: "white", fontWeight: 700 }}>
+            Revenue Collections
+          </Typography>
+          <Typography sx={{ color: "#94a3b8", mt: 1 }}>
+            Record payments and track collection activity for assessments.
+          </Typography>
+        </Box>
 
-        <p>Municipal payment collection engine.</p>
-      </div>
+        <EnterpriseSectionCard title="Collect Payment" subtitle="Record a payment against an outstanding assessment.">
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 5 }}>
+              <TextField
+                select
+                fullWidth
+                label="Assessment *"
+                value={selectedAssessment}
+                onChange={(event) => setSelectedAssessment(event.target.value)}
+              >
+                {assessments.map((item) => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.assessment_number || `ASM-${item.id}`} • ₹{Number(item.total_amount || 0).toFixed(2)}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Payment Amount *"
+                value={paymentAmount}
+                onChange={(event) => setPaymentAmount(event.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <TextField
+                select
+                fullWidth
+                label="Payment Mode"
+                value={paymentMode}
+                onChange={(event) => setPaymentMode(event.target.value)}
+              >
+                <MenuItem value="CASH">Cash</MenuItem>
+                <MenuItem value="UPI">UPI</MenuItem>
+                <MenuItem value="CARD">Card</MenuItem>
+                <MenuItem value="BANK">Bank</MenuItem>
+              </TextField>
+            </Grid>
+          </Grid>
 
-      {/* ============================== */}
-      {/* PAYMENT FORM */}
-      {/* ============================== */}
-
-      <div className="payment-card">
-        <div className="payment-grid">
-          <div className="field-group">
-            <label>Select Assessment</label>
-
-            <select
-              value={selectedAssessment}
-              onChange={(e) => setSelectedAssessment(e.target.value)}
+          <Box sx={{ mt: 2 }}>
+            <Button
+              variant="contained"
+              startIcon={<PaymentsIcon />}
+              onClick={makePayment}
+              disabled={submitting}
             >
-              <option value="">Select Assessment</option>
+              {submitting ? "Recording..." : "Collect Payment"}
+            </Button>
+          </Box>
+        </EnterpriseSectionCard>
 
-              {assessments.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.assessment_number} - ₹ {item.total_amount}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="field-group">
-            <label>Payment Amount</label>
-
-            <input
-              type="number"
-              placeholder="Enter Payment Amount"
-              value={paymentAmount}
-              onChange={(e) => setPaymentAmount(e.target.value)}
-            />
-          </div>
-
-          <div className="field-group">
-            <label>Payment Mode</label>
-
-            <select
-              value={paymentMode}
-              onChange={(e) => setPaymentMode(e.target.value)}
-            >
-              <option value="CASH">Cash</option>
-
-              <option value="UPI">UPI</option>
-
-              <option value="CARD">Card</option>
-
-              <option value="BANK">Bank</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="payment-actions">
-          <button className="primary-btn" onClick={makePayment}>
-            Collect Payment
-          </button>
-        </div>
-      </div>
-
-      {/* ============================== */}
-      {/* PAYMENTS TABLE */}
-      {/* ============================== */}
-
-      <div className="payment-table-card">
-        <table className="payment-table">
-          <thead>
-            <tr>
-              <th>#</th>
-
-              <th>Receipt No</th>
-
-              <th>Assessment</th>
-
-              <th>Amount</th>
-
-              <th>Mode</th>
-
-              <th>Date</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {payments.map((item, index) => (
-              <tr key={item.id}>
-                <td>{index + 1}</td>
-
-                <td>{item.payment_number}</td>
-
-                <td>{item.assessment_number}</td>
-
-                <td>₹ {item.payment_amount}</td>
-
-                <td>{item.payment_mode}</td>
-
-                <td>{item.payment_date}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+        <EnterpriseSectionCard title="Payment Ledger" subtitle="Recent payments recorded in the system.">
+          <Grid container spacing={2}>
+            {loading ? (
+              <Grid size={12}>
+                <Typography color="text.secondary">Loading payments...</Typography>
+              </Grid>
+            ) : payments.length === 0 ? (
+              <Grid size={12}>
+                <Typography color="text.secondary">No payments recorded yet.</Typography>
+              </Grid>
+            ) : (
+              payments.map((item) => (
+                <Grid size={{ xs: 12, md: 6 }} key={item.id}>
+                  <Box
+                    sx={{
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 3,
+                      p: 2.5,
+                      background: "rgba(255,255,255,0.04)",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
+                      <Box>
+                        <Typography sx={{ color: "#fff", fontWeight: 700 }}>
+                          {item.payment_number || `RCPT-${item.id}`}
+                        </Typography>
+                        <Typography sx={{ color: "#94a3b8", fontSize: 13, mt: 0.5 }}>
+                          {item.assessment_number || "Assessment"}
+                        </Typography>
+                      </Box>
+                      <Chip label={item.payment_mode || "CASH"} color="success" size="small" />
+                    </Box>
+                    <Typography sx={{ color: "#94a3b8", mt: 2 }}>
+                      Amount: ₹{Number(item.payment_amount || 0).toFixed(2)}
+                    </Typography>
+                    <Typography sx={{ color: "#94a3b8" }}>
+                      Date: {item.payment_date || "—"}
+                    </Typography>
+                  </Box>
+                </Grid>
+              ))
+            )}
+          </Grid>
+        </EnterpriseSectionCard>
+      </Box>
+    </AdminLayout>
   );
 };
 

@@ -1,199 +1,151 @@
-import React, { useState } from "react";
-import "../styles/TaxTypesPage.css";
+import { useEffect, useState } from "react";
+import { Box, Button, Chip, Grid, TextField, Typography } from "@mui/material";
+
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+
+import AdminLayout from "../layouts/AdminLayout";
+import AdminSidebar from "../components/AdminSidebar";
+import EnterpriseSectionCard from "../components/enterprise/EnterpriseSectionCard";
+
 import { useTaxContext } from "../context/TaxContext";
 
 export default function TaxTypesPage() {
+  const { taxTypes, loadTaxTypes, addTaxType, deleteTaxType } = useTaxContext();
+
   const [formData, setFormData] = useState({
     tax_code: "",
-
     tax_name: "",
-
     description: "",
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
-  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    loadTaxTypes();
+  }, [loadTaxTypes]);
 
-  // ====================================
-  // LOAD TAX TYPES
-  // ====================================
-
-  const {
-    taxTypes,
-
-    addTaxType,
-
-    deleteTaxType,
-  } = useTaxContext();
-
-  // ====================================
-  // HANDLE INPUT
-  // ====================================
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-
-      [e.target.name]: e.target.value,
-    });
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ====================================
-  // ADD TAX TYPE
-  // ====================================
-
   const handleAddTaxType = async () => {
+    if (!formData.tax_code?.trim() || !formData.tax_name?.trim()) {
+      alert("Tax code and tax name are required");
+      return;
+    }
+
     try {
-      setLoading(true);
-
+      setSubmitting(true);
       await addTaxType(formData);
-
-      setFormData({
-        tax_code: "",
-
-        tax_name: "",
-
-        description: "",
-      });
-
-      
-
-      window.dispatchEvent(new Event("taxTypesUpdated"));
+      setFormData({ tax_code: "", tax_name: "", description: "" });
+      await loadTaxTypes();
     } catch (error) {
       console.error(error);
+      alert("Failed to add tax type");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  // ====================================
-  // DELETE TAX TYPE
-  // ====================================
-
   const handleDelete = async (id) => {
     try {
+      setDeletingId(id);
       await deleteTaxType(id);
-
-      
+      await loadTaxTypes();
     } catch (error) {
       console.error(error);
+      alert("Failed to delete tax type");
+    } finally {
+      setDeletingId(null);
     }
   };
 
   return (
-    <div className="tax-page">
-      {/* ============================= */}
-      {/* TOP SECTION */}
-      {/* ============================= */}
+    <AdminLayout sidebar={<AdminSidebar />} pageTitle="Tax Types">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <Box>
+          <Typography variant="h4" sx={{ color: "white", fontWeight: 700 }}>
+            Tax Type Management
+          </Typography>
+          <Typography sx={{ color: "#94a3b8", mt: 1 }}>
+            Configure taxation modules and define the rules that govern assessments.
+          </Typography>
+        </Box>
 
-      <div className="tax-page-top">
-        <div>
-          <h2>Tax Types Management</h2>
+        <EnterpriseSectionCard title="Add Tax Type" subtitle="Create a new taxable category for the municipality.">
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField fullWidth label="Tax Code *" name="tax_code" value={formData.tax_code} onChange={handleChange} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField fullWidth label="Tax Name *" name="tax_name" value={formData.tax_name} onChange={handleChange} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField fullWidth label="Description" name="description" value={formData.description} onChange={handleChange} />
+            </Grid>
+          </Grid>
 
-          <p>
-            Configure dynamic taxation modules for municipalities and governance
-            entities.
-          </p>
-        </div>
-      </div>
+          <Box sx={{ mt: 3 }}>
+            <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddTaxType} disabled={submitting}>
+              {submitting ? "Adding..." : "Add Tax Type"}
+            </Button>
+          </Box>
+        </EnterpriseSectionCard>
 
-      {/* ============================= */}
-      {/* FORM */}
-      {/* ============================= */}
-
-      <div className="tax-form-card">
-        <div className="tax-form-grid">
-          <input
-            type="text"
-            name="tax_code"
-            placeholder="Tax Code"
-            value={formData.tax_code}
-            onChange={handleChange}
-          />
-
-          <input
-            type="text"
-            name="tax_name"
-            placeholder="Tax Name"
-            value={formData.tax_name}
-            onChange={handleChange}
-          />
-
-          <input
-            type="text"
-            name="description"
-            placeholder="Description"
-            value={formData.description}
-            onChange={handleChange}
-          />
-        </div>
-
-        <button
-          className="primary-btn"
-          onClick={handleAddTaxType}
-          disabled={loading}
-        >
-          {loading ? "Adding..." : "Add Tax Type"}
-        </button>
-      </div>
-
-      {/* ============================= */}
-      {/* TABLE */}
-      {/* ============================= */}
-
-      <div className="tax-table-card">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-
-              <th>Tax Code</th>
-
-              <th>Tax Name</th>
-
-              <th>Description</th>
-
-              <th>Status</th>
-
-              <th>Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
+        <EnterpriseSectionCard title="Tax Type List" subtitle="Existing tax categories available to the system.">
+          <Grid container spacing={2}>
             {taxTypes.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="empty-row">
-                  No Tax Types Found
-                </td>
-              </tr>
+              <Grid size={12}>
+                <Typography color="text.secondary">No tax types found.</Typography>
+              </Grid>
             ) : (
-              taxTypes.map((item, index) => (
-                <tr key={item.id}>
-                  <td>{index + 1}</td>
+              taxTypes.map((item) => (
+                <Grid size={{ xs: 12, md: 6 }} key={item.id}>
+                  <Box
+                    sx={{
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 3,
+                      p: 2.5,
+                      background: "rgba(255,255,255,0.04)",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
+                      <Box>
+                        <Typography sx={{ color: "#fff", fontWeight: 700 }}>
+                          {item.tax_name}
+                        </Typography>
+                        <Typography sx={{ color: "#94a3b8", fontSize: 13, mt: 0.5 }}>
+                          {item.tax_code || "—"}
+                        </Typography>
+                      </Box>
+                      <Chip label="ACTIVE" color="success" size="small" />
+                    </Box>
 
-                  <td>{item.tax_code || "-"}</td>
+                    <Typography sx={{ color: "#94a3b8", mt: 2 }}>
+                      {item.description || "No description provided."}
+                    </Typography>
 
-                  <td>{item.tax_name}</td>
-
-                  <td>{item.description || "-"}</td>
-
-                  <td>
-                    <span className="status-active">Active</span>
-                  </td>
-
-                  <td>
-                    <button
-                      className="delete-btn"
-                      onClick={() => handleDelete(item.id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
+                    <Box sx={{ mt: 2 }}>
+                      <Button
+                        color="error"
+                        variant="outlined"
+                        startIcon={<DeleteIcon />}
+                        onClick={() => handleDelete(item.id)}
+                        disabled={deletingId === item.id}
+                      >
+                        {deletingId === item.id ? "Deleting..." : "Delete"}
+                      </Button>
+                    </Box>
+                  </Box>
+                </Grid>
               ))
             )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </Grid>
+        </EnterpriseSectionCard>
+      </Box>
+    </AdminLayout>
   );
 }
+

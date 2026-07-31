@@ -29,6 +29,7 @@ const { applyPenalties } = require("./src/engines/penaltyEngine");
 const lifecycleService = require("./src/services/assessmentLifecycleService");
 
 const demandRoutes = require("./src/routes/demandRoutes");
+const citizenPortalRoutes = require("./src/routes/citizenPortalRoutes");
 
 // =====================================
 // ROUTE REGISTRATION
@@ -49,6 +50,7 @@ app.use("/", ruleRoutes);
 app.use("/", financialYearRoutes);
 app.use("/", assessmentLifecycleRoutes);
 app.use("/", demandRoutes);
+app.use("/", citizenPortalRoutes);
 // app.use("/", lifecycleRoutes);
 
 // cron.schedule("0 0 * * *", async () => {

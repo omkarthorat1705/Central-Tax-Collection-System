@@ -100,9 +100,36 @@ const updateAssessmentStatus = (assessmentId, tenantId, status) => {
   });
 };
 
+const getPayments = (tenantId) => {
+  return new Promise((resolve, reject) => {
+    db.all(
+      `
+      SELECT
+        tp.id,
+        tp.payment_number,
+        tp.payment_date,
+        tp.payment_amount,
+        tp.payment_mode,
+        ta.assessment_number,
+        ta.total_amount AS assessment_total
+      FROM tax_payments tp
+      LEFT JOIN tax_assessments ta ON ta.id = tp.assessment_id AND ta.tenant_id = tp.tenant_id
+      WHERE tp.tenant_id = ?
+      ORDER BY tp.payment_date DESC
+      `,
+      [tenantId],
+      (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      },
+    );
+  });
+};
+
 module.exports = {
   getAssessmentById,
   getTotalPaidAmount,
   createPayment,
   updateAssessmentStatus,
+  getPayments,
 };

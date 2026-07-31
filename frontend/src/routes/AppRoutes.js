@@ -15,14 +15,30 @@ import EditCitizenPage from "../pages/citizens/EditCitizenPage";
 // Assets
 import AssetsPage from "../pages/assets/AssetsPage";
 import CreateAssetPage from "../pages/assets/CreateAssetPage";
-// import ViewAssetPage from "../pages/assets/ViewAssetPage";
-// import EditAssetPage from "../pages/assets/EditAssetPage";
+import ViewAssetPage from "../pages/assets/ViewAssetPage";
+import EditAssetPage from "../pages/assets/EditAssetPage";
 // import AssetParametersPage from "../pages/assets/AssetParametersPage";
 
+// Tax Types
+import TaxTypesPage from "../pages/TaxTypesPage";
+
+// Parameters
+import ParametersPage from "../pages/ParametersPage";
+
 // Assessments
-// import GenerateAssessmentPage from "../pages/assessments/GenerateAssessmentPage";
-// import AssessmentListPage from "../pages/assessments/AssessmentListPage";
-// import ViewAssessmentPage from "../pages/assessments/ViewAssessmentPage";
+import AssessmentsPage from "../pages/AssessmentsPage";
+
+// Payments
+import PaymentsPage from "../pages/PaymentsPage";
+
+// Reports
+import ReportsPage from "../pages/ReportsPage";
+
+// Demands
+import DemandsPage from "../pages/DemandsPage";
+
+// Citizen Portal
+import CitizenPortalPage from "../pages/citizen/CitizenPortalPage";
 
 const AppRoutes = () => {
   return (
@@ -33,6 +49,8 @@ const AppRoutes = () => {
         <Route path="/" element={<LandingPage />} />
 
         <Route path="/login" element={<LoginPage />} />
+
+        <Route path="/citizen-portal" element={<CitizenPortalPage />} />
 
         {/* Dashboard */}
 
@@ -102,7 +120,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-{/* 
+
         <Route
           path="/assets/view/:id"
           element={
@@ -121,22 +139,42 @@ const AppRoutes = () => {
           }
         />
 
+        {/* Tax Types */}
+
         <Route
-          path="/assets/:id/parameters"
+          path="/tax-types"
           element={
             <ProtectedRoute>
-              <AssetParametersPage />
+              <TaxTypesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/tax-config"
+          element={
+            <ProtectedRoute>
+              <TaxTypesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/parameters"
+          element={
+            <ProtectedRoute>
+              <ParametersPage />
             </ProtectedRoute>
           }
         />
 
         {/* Assessments */}
 
-        {/* <Route
+        <Route
           path="/assessments"
           element={
             <ProtectedRoute>
-              <AssessmentListPage />
+              <AssessmentsPage />
             </ProtectedRoute>
           }
         />
@@ -145,19 +183,37 @@ const AppRoutes = () => {
           path="/assessments/generate/:assetId"
           element={
             <ProtectedRoute>
-              <GenerateAssessmentPage />
+              <AssessmentsPage />
             </ProtectedRoute>
           }
         />
 
         <Route
-          path="/assessments/view/:id"
+          path="/payments"
           element={
             <ProtectedRoute>
-              <ViewAssessmentPage />
+              <PaymentsPage />
             </ProtectedRoute>
           }
-        /> */}
+        />
+
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <ReportsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/demands"
+          element={
+            <ProtectedRoute>
+              <DemandsPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

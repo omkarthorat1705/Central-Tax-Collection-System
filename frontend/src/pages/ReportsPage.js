@@ -1,52 +1,39 @@
 import React, { useEffect, useState } from "react";
-
+import {
+  Box,
+  Grid,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
+import AdminLayout from "../layouts/AdminLayout";
+import AdminSidebar from "../components/AdminSidebar";
 import API from "../api/api";
-
-import "../styles/ReportsPage.css";
 
 const ReportsPage = () => {
   const [summary, setSummary] = useState({
     total_assessment: 0,
-
     total_collection: 0,
-
     total_pending: 0,
-
     partial_cases: 0,
   });
-
   const [wardCollection, setWardCollection] = useState([]);
-
   const [taxCollection, setTaxCollection] = useState([]);
-
-  // =====================================
-  // LOAD REPORTS
-  // =====================================
 
   const loadReports = async () => {
     try {
-      // ===========================
-      // SUMMARY
-      // ===========================
-
       const summaryResponse = await API.get("/getRevenueSummary");
-
-      setSummary(summaryResponse.data.data);
-
-      // ===========================
-      // WARD COLLECTION
-      // ===========================
+      setSummary(summaryResponse.data.data || {});
 
       const wardResponse = await API.get("/getWardWiseCollection");
-
       setWardCollection(wardResponse.data.data || []);
 
-      // ===========================
-      // TAX COLLECTION
-      // ===========================
-
       const taxResponse = await API.get("/getTaxWiseCollection");
-
       setTaxCollection(taxResponse.data.data || []);
     } catch (error) {
       console.error(error);
@@ -57,100 +44,102 @@ const ReportsPage = () => {
     loadReports();
   }, []);
 
+  const statCards = [
+    { label: "Total Assessments", value: summary.total_assessment || 0 },
+    { label: "Total Collections", value: `₹${Number(summary.total_collection || 0).toFixed(2)}` },
+    { label: "Pending Dues", value: `₹${Number(summary.total_pending || 0).toFixed(2)}` },
+    { label: "Partial Payments", value: summary.partial_cases || 0 },
+  ];
+
   return (
-    <div className="reports-page">
-      <div className="page-header">
-        <h2>Revenue Analytics & Reports</h2>
+    <AdminLayout sidebar={<AdminSidebar />} pageTitle="Reports">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <Box>
+          <Typography variant="h4" sx={{ color: "white", fontWeight: 700 }}>
+            Revenue Analytics & Reports
+          </Typography>
+          <Typography sx={{ color: "#94a3b8", mt: 1 }}>
+            Track revenue performance across assessments, collections, wards, and tax types.
+          </Typography>
+        </Box>
 
-        <p>Enterprise municipal analytics and revenue intelligence.</p>
-      </div>
+        <Grid container spacing={2}>
+          {statCards.map((card) => (
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={card.label}>
+              <Paper
+                sx={{
+                  p: 2.5,
+                  borderRadius: 3,
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                <Typography sx={{ color: "#94a3b8", fontSize: 13 }}>
+                  {card.label}
+                </Typography>
+                <Typography variant="h5" sx={{ color: "white", fontWeight: 700, mt: 1 }}>
+                  {card.value}
+                </Typography>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
 
-      {/* ========================= */}
-      {/* SUMMARY */}
-      {/* ========================= */}
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper sx={{ p: 2.5, borderRadius: 3, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <Typography sx={{ color: "white", fontWeight: 700, mb: 2 }}>
+                Ward Wise Collection
+              </Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ color: "#94a3b8" }}>Ward</TableCell>
+                      <TableCell sx={{ color: "#94a3b8" }}>Collection</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {wardCollection.map((item, index) => (
+                      <TableRow key={`${item.ward_number || index}`}>
+                        <TableCell sx={{ color: "white" }}>{item.ward_number || "—"}</TableCell>
+                        <TableCell sx={{ color: "white" }}>₹{Number(item.total_collection || 0).toFixed(2)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          </Grid>
 
-      <div className="report-grid">
-        <div className="report-card">
-          <h3>Total Assessments</h3>
-
-          <h2>₹ {summary.total_assessment || 0}</h2>
-        </div>
-
-        <div className="report-card">
-          <h3>Total Collections</h3>
-
-          <h2>₹ {summary.total_collection || 0}</h2>
-        </div>
-
-        <div className="report-card">
-          <h3>Pending Dues</h3>
-
-          <h2>₹ {summary.total_pending || 0}</h2>
-        </div>
-
-        <div className="report-card">
-          <h3>Partial Payments</h3>
-
-          <h2>{summary.partial_cases || 0}</h2>
-        </div>
-      </div>
-
-      {/* ========================= */}
-      {/* WARD COLLECTION */}
-      {/* ========================= */}
-
-      <div className="table-card">
-        <h3>Ward Wise Collection</h3>
-
-        <table className="report-table">
-          <thead>
-            <tr>
-              <th>Ward</th>
-
-              <th>Total Collection</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {wardCollection.map((item, index) => (
-              <tr key={index}>
-                <td>{item.ward_number}</td>
-
-                <td>₹ {item.total_collection}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* ========================= */}
-      {/* TAX COLLECTION */}
-      {/* ========================= */}
-
-      <div className="table-card">
-        <h3>Tax Type Collection</h3>
-
-        <table className="report-table">
-          <thead>
-            <tr>
-              <th>Tax Type</th>
-
-              <th>Total Collection</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {taxCollection.map((item, index) => (
-              <tr key={index}>
-                <td>{item.tax_name}</td>
-
-                <td>₹ {item.total_collection}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper sx={{ p: 2.5, borderRadius: 3, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <Typography sx={{ color: "white", fontWeight: 700, mb: 2 }}>
+                Tax Type Collection
+              </Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ color: "#94a3b8" }}>Tax Type</TableCell>
+                      <TableCell sx={{ color: "#94a3b8" }}>Collection</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {taxCollection.map((item, index) => (
+                      <TableRow key={`${item.tax_name || index}`}>
+                        <TableCell sx={{ color: "white" }}>{item.tax_name || "—"}</TableCell>
+                        <TableCell sx={{ color: "white" }}>₹{Number(item.total_collection || 0).toFixed(2)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Box>
+    </AdminLayout>
   );
 };
 

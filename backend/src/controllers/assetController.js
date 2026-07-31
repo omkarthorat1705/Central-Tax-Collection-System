@@ -27,6 +27,16 @@ const registerAsset = asyncHandler(async (req, res) => {
   return successResponse(res, result);
 });
 
+const updateAsset = asyncHandler(async (req, res) => {
+  const result = await assetService.updateAsset(
+    req.params.id,
+    req.body,
+    req.tenant.tenant_id,
+  );
+
+  return successResponse(res, result);
+});
+
 const getAssetTypes = asyncHandler(
   async (req, res) => {
     const data =
@@ -46,5 +56,6 @@ module.exports = {
   getAssets,
   getAssetById,
   registerAsset,
+  updateAsset,
   getAssetTypes,
 };

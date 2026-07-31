@@ -4,61 +4,49 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
-  Grid,
   Button,
-  Stepper,
+  Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  Grid,
+  MenuItem,
   Step,
   StepLabel,
+  Stepper,
   TextField,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Typography,
 } from "@mui/material";
 
-import SaveIcon from "@mui/icons-material/Save";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import SaveIcon from "@mui/icons-material/Save";
 
 import AdminLayout from "../../layouts/AdminLayout";
 import AdminSidebar from "../../components/AdminSidebar";
-
-import EnterpriseSummaryPanel from "../../components/enterprise/EnterpriseSummaryPanel";
 import EnterpriseSectionCard from "../../components/enterprise/EnterpriseSectionCard";
+import EnterpriseSummaryPanel from "../../components/enterprise/EnterpriseSummaryPanel";
 
 import assetService from "../../services/assetService";
 import { getCitizens } from "../../services/citizenService";
 
-const steps = [
-  "Asset Details",
-  "Tax Assignment",
-  "Assessment Parameters",
-  "Review",
-];
+const steps = ["Asset Details", "Tax Assignment", "Assessment Parameters", "Review"];
 
 export default function CreateAssetPage() {
   const navigate = useNavigate();
 
   const [activeStep, setActiveStep] = useState(0);
-
   const [citizens, setCitizens] = useState([]);
   const [assetTypes, setAssetTypes] = useState([]);
   const [taxTypes, setTaxTypes] = useState([]);
-
   const [selectedTaxes, setSelectedTaxes] = useState([]);
   const [parameters, setParameters] = useState([]);
   const [parameterValues, setParameterValues] = useState({});
-
   const [saving, setSaving] = useState(false);
-
   const [errors, setErrors] = useState({});
-
   const [isDirty, setIsDirty] = useState(false);
-
   const [showExitDialog, setShowExitDialog] = useState(false);
 
   const [form, setForm] = useState({
@@ -69,80 +57,70 @@ export default function CreateAssetPage() {
   });
 
   useEffect(() => {
+    let isMounted = true;
+
+    const loadInitialData = async () => {
+      try {
+        const [citizenData, assetTypeData, taxData] = await Promise.all([
+          getCitizens(),
+          assetService.getAssetTypes(),
+          assetService.getTaxTypes(),
+        ]);
+
+        if (isMounted) {
+          setCitizens(citizenData || []);
+          setAssetTypes(assetTypeData || []);
+          setTaxTypes(taxData || []);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
     loadInitialData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
-
-  const loadInitialData = async () => {
-    try {
-      const citizenData = await getCitizens();
-
-      const assetTypeData =
-        await assetService.getAssetTypes();
-
-      const taxData =
-        await assetService.getTaxTypes();
-
-      setCitizens(citizenData || []);
-      setAssetTypes(assetTypeData || []);
-      setTaxTypes(taxData || []);
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   const handleChange = (field, value) => {
     setIsDirty(true);
-
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleTaxSelection = async (taxId) => {
-    let updatedTaxes = [];
+    setIsDirty(true);
 
-    if (selectedTaxes.includes(taxId)) {
-      updatedTaxes = selectedTaxes.filter(
-        (id) => id !== taxId,
-      );
-    } else {
-      updatedTaxes = [...selectedTaxes, taxId];
-    }
+    const updatedTaxes = selectedTaxes.includes(taxId)
+      ? selectedTaxes.filter((id) => id !== taxId)
+      : [...selectedTaxes, taxId];
 
     setSelectedTaxes(updatedTaxes);
 
     try {
-      const parameterData =
-        await assetService.getAssetParameters(
-          updatedTaxes,
-        );
-
+      const parameterData = await assetService.getAssetParameters(updatedTaxes);
       setParameters(parameterData || []);
     } catch (error) {
       console.error(error);
+      setErrors((prev) => ({ ...prev, taxes: "Unable to load assessment parameters." }));
     }
   };
 
-  const handleParameterChange = (
-    parameterId,
-    value,
-  ) => {
-    setParameterValues((prev) => ({
-      ...prev,
-      [parameterId]: value,
-    }));
+  const handleParameterChange = (parameterId, value) => {
+    setParameterValues((prev) => ({ ...prev, [parameterId]: value }));
   };
 
   const calculateProgress = () => {
     let completed = 0;
 
-    if (form.citizen_id) completed++;
-    if (form.asset_name) completed++;
-    if (form.asset_type) completed++;
-    if (form.asset_address) completed++;
+    if (form.citizen_id) completed += 1;
+    if (form.asset_name) completed += 1;
+    if (form.asset_type) completed += 1;
+    if (form.asset_address) completed += 1;
+    if (selectedTaxes.length > 0) completed += 1;
 
-    return (completed / 4) * 100;
+    return (completed / 5) * 100;
   };
 
   const progress = calculateProgress();
@@ -152,43 +130,41 @@ export default function CreateAssetPage() {
 
     if (activeStep === 0) {
       if (!form.citizen_id) {
-        newErrors.citizen_id =
-          "Citizen is required";
+        newErrors.citizen_id = "Citizen is required";
       }
 
-      if (!form.asset_name) {
-        newErrors.asset_name =
-          "Asset Name is required";
+      if (!form.asset_name?.trim()) {
+        newErrors.asset_name = "Asset name is required";
       }
 
       if (!form.asset_type) {
-        newErrors.asset_type =
-          "Asset Type is required";
+        newErrors.asset_type = "Asset type is required";
       }
     }
 
-    if (activeStep === 1) {
-      if (selectedTaxes.length === 0) {
-        alert(
-          "Please select at least one tax type",
-        );
-
-        return false;
-      }
+    if (activeStep === 1 && selectedTaxes.length === 0) {
+      newErrors.taxes = "Please select at least one tax type";
     }
 
     setErrors(newErrors);
-
     return Object.keys(newErrors).length === 0;
   };
 
   const handleNext = () => {
-    if (!validateCurrentStep()) return;
+    if (!validateCurrentStep()) {
+      return;
+    }
 
     setActiveStep((prev) => prev + 1);
   };
 
   const handleSave = async () => {
+    if (saving) return;
+
+    if (!validateCurrentStep()) {
+      return;
+    }
+
     try {
       setSaving(true);
 
@@ -198,57 +174,34 @@ export default function CreateAssetPage() {
         parameter_values: parameterValues,
       });
 
-      alert(
-        "Asset Registered Successfully",
-      );
-
+      setIsDirty(false);
+      alert("Asset registered successfully");
       navigate("/assets");
     } catch (error) {
       console.error(error);
-
-      alert(
-        "Failed to register asset",
-      );
+      alert("Failed to register asset");
     } finally {
       setSaving(false);
     }
   };
 
-  const selectedCitizen =
-    citizens.find(
-      (c) =>
-        String(c.id) ===
-        String(form.citizen_id),
-    ) || {};
+  const selectedCitizen = citizens.find((citizen) => String(citizen.id) === String(form.citizen_id)) || {};
 
   return (
-    <AdminLayout
-      sidebar={<AdminSidebar />}
-      pageTitle="Asset Registration"
-    >
+    <AdminLayout sidebar={<AdminSidebar />} pageTitle="Asset Registration">
       <div className="citizen-page">
         <div className="citizen-header">
-          <div className="citizen-title">
-            Asset Registration
-          </div>
-
+          <div className="citizen-title">Asset Registration</div>
           <div className="citizen-subtitle">
-            Register citizen assets
-            and map applicable tax
-            types for assessment.
+            Register citizen assets and map applicable tax types for assessment.
           </div>
         </div>
 
         <EnterpriseSectionCard>
-          <Stepper
-            activeStep={activeStep}
-            className="enterprise-stepper"
-          >
+          <Stepper activeStep={activeStep} className="enterprise-stepper">
             {steps.map((step) => (
               <Step key={step}>
-                <StepLabel>
-                  {step}
-                </StepLabel>
+                <StepLabel>{step}</StepLabel>
               </Step>
             ))}
           </Stepper>
@@ -256,54 +209,24 @@ export default function CreateAssetPage() {
 
         <div className="citizen-body">
           <div className="citizen-form">
-
             {activeStep === 0 && (
-              <EnterpriseSectionCard
-                title="Asset Information"
-                subtitle="Register asset details"
-              >
+              <EnterpriseSectionCard title="Asset Information" subtitle="Register the primary asset details.">
                 <Grid container spacing={3}>
                   <Grid size={12}>
                     <TextField
                       select
                       fullWidth
                       label="Citizen *"
-                      value={
-                        form.citizen_id
-                      }
-                      error={
-                        !!errors.citizen_id
-                      }
-                      helperText={
-                        errors.citizen_id
-                      }
-                      onChange={(e) =>
-                        handleChange(
-                          "citizen_id",
-                          e.target.value,
-                        )
-                      }
+                      value={form.citizen_id}
+                      error={!!errors.citizen_id}
+                      helperText={errors.citizen_id}
+                      onChange={(event) => handleChange("citizen_id", event.target.value)}
                     >
-                      {citizens.map(
-                        (citizen) => (
-                          <MenuItem
-                            key={
-                              citizen.id
-                            }
-                            value={
-                              citizen.id
-                            }
-                          >
-                            {
-                              citizen.citizen_code
-                            }
-                            {" - "}
-                            {
-                              citizen.full_name
-                            }
-                          </MenuItem>
-                        ),
-                      )}
+                      {citizens.map((citizen) => (
+                        <MenuItem key={citizen.id} value={citizen.id}>
+                          {citizen.citizen_code} - {citizen.full_name}
+                        </MenuItem>
+                      ))}
                     </TextField>
                   </Grid>
 
@@ -311,21 +234,10 @@ export default function CreateAssetPage() {
                     <TextField
                       fullWidth
                       label="Asset Name *"
-                      value={
-                        form.asset_name
-                      }
-                      error={
-                        !!errors.asset_name
-                      }
-                      helperText={
-                        errors.asset_name
-                      }
-                      onChange={(e) =>
-                        handleChange(
-                          "asset_name",
-                          e.target.value,
-                        )
-                      }
+                      value={form.asset_name}
+                      error={!!errors.asset_name}
+                      helperText={errors.asset_name}
+                      onChange={(event) => handleChange("asset_name", event.target.value)}
                     />
                   </Grid>
 
@@ -334,38 +246,16 @@ export default function CreateAssetPage() {
                       select
                       fullWidth
                       label="Asset Type *"
-                      value={
-                        form.asset_type
-                      }
-                      error={
-                        !!errors.asset_type
-                      }
-                      helperText={
-                        errors.asset_type
-                      }
-                      onChange={(e) =>
-                        handleChange(
-                          "asset_type",
-                          e.target.value,
-                        )
-                      }
+                      value={form.asset_type}
+                      error={!!errors.asset_type}
+                      helperText={errors.asset_type}
+                      onChange={(event) => handleChange("asset_type", event.target.value)}
                     >
-                      {assetTypes.map(
-                        (type) => (
-                          <MenuItem
-                            key={
-                              type.id
-                            }
-                            value={
-                              type.asset_type_name
-                            }
-                          >
-                            {
-                              type.asset_type_name
-                            }
-                          </MenuItem>
-                        ),
-                      )}
+                      {assetTypes.map((type) => (
+                        <MenuItem key={type.id} value={type.asset_type_name}>
+                          {type.asset_type_name}
+                        </MenuItem>
+                      ))}
                     </TextField>
                   </Grid>
 
@@ -375,15 +265,8 @@ export default function CreateAssetPage() {
                       multiline
                       rows={4}
                       label="Asset Address"
-                      value={
-                        form.asset_address
-                      }
-                      onChange={(e) =>
-                        handleChange(
-                          "asset_address",
-                          e.target.value,
-                        )
-                      }
+                      value={form.asset_address}
+                      onChange={(event) => handleChange("asset_address", event.target.value)}
                     />
                   </Grid>
                 </Grid>
@@ -391,185 +274,99 @@ export default function CreateAssetPage() {
             )}
 
             {activeStep === 1 && (
-              <EnterpriseSectionCard
-                title="Applicable Taxes"
-                subtitle="Select tax types"
-              >
+              <EnterpriseSectionCard title="Applicable Taxes" subtitle="Select the tax types that apply to this asset.">
                 <Grid container spacing={2}>
-                  {taxTypes.map(
-                    (tax) => (
-                      <Grid
-                        size={{
-                          xs: 12,
-                          md: 6,
-                        }}
-                        key={tax.id}
-                      >
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              checked={selectedTaxes.includes(
-                                tax.id,
-                              )}
-                              onChange={() =>
-                                handleTaxSelection(
-                                  tax.id,
-                                )
-                              }
-                            />
-                          }
-                          label={
-                            tax.tax_name
-                          }
-                        />
-                      </Grid>
-                    ),
-                  )}
+                  {taxTypes.map((tax) => (
+                    <Grid size={{ xs: 12, md: 6 }} key={tax.id}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={selectedTaxes.includes(tax.id)}
+                            onChange={() => handleTaxSelection(tax.id)}
+                          />
+                        }
+                        label={tax.tax_name}
+                      />
+                    </Grid>
+                  ))}
                 </Grid>
+
+                {errors.taxes && (
+                  <Typography color="error" sx={{ mt: 2 }}>
+                    {errors.taxes}
+                  </Typography>
+                )}
               </EnterpriseSectionCard>
             )}
 
             {activeStep === 2 && (
-              <EnterpriseSectionCard
-                title="Assessment Parameters"
-                subtitle="Dynamic fields from tax configuration"
-              >
+              <EnterpriseSectionCard title="Assessment Parameters" subtitle="Capture any tax-specific parameter values.">
                 <Grid container spacing={3}>
-                  {parameters.map(
-                    (
-                      parameter,
-                    ) => {
-                      const options =
-                        parameter.possible_values
-                          ?.split(",")
-                          .map((v) =>
-                            v.trim(),
-                          ) || [];
+                  {parameters.length === 0 ? (
+                    <Grid size={12}>
+                      <Typography color="text.secondary">
+                        No assessment parameters are available for the selected tax types yet.
+                      </Typography>
+                    </Grid>
+                  ) : (
+                    parameters.map((parameter) => {
+                      const options = parameter.possible_values?.split(",").map((value) => value.trim()).filter(Boolean) || [];
 
-                      if (
-                        parameter.ui_component ===
-                        "DROPDOWN"
-                      ) {
+                      if (parameter.ui_component === "DROPDOWN") {
                         return (
-                          <Grid
-                            size={{
-                              xs: 12,
-                              md: 6,
-                            }}
-                            key={
-                              parameter.id
-                            }
-                          >
+                          <Grid size={{ xs: 12, md: 6 }} key={parameter.id}>
                             <TextField
                               select
                               fullWidth
-                              label={
-                                parameter.parameter_name
-                              }
-                              onChange={(
-                                e,
-                              ) =>
-                                handleParameterChange(
-                                  parameter.id,
-                                  e
-                                    .target
-                                    .value,
-                                )
-                              }
+                              label={parameter.parameter_name}
+                              value={parameterValues[parameter.id] ?? ""}
+                              onChange={(event) => handleParameterChange(parameter.id, event.target.value)}
                             >
-                              {options.map(
-                                (
-                                  item,
-                                  index,
-                                ) => (
-                                  <MenuItem
-                                    key={
-                                      index
-                                    }
-                                    value={
-                                      item
-                                    }
-                                  >
-                                    {
-                                      item
-                                    }
-                                  </MenuItem>
-                                ),
-                              )}
+                              {options.map((option, index) => (
+                                <MenuItem key={`${parameter.id}-${index}`} value={option}>
+                                  {option}
+                                </MenuItem>
+                              ))}
                             </TextField>
                           </Grid>
                         );
                       }
 
                       return (
-                        <Grid
-                          size={{
-                            xs: 12,
-                            md: 6,
-                          }}
-                          key={
-                            parameter.id
-                          }
-                        >
+                        <Grid size={{ xs: 12, md: 6 }} key={parameter.id}>
                           <TextField
                             fullWidth
-                            label={
-                              parameter.parameter_name
-                            }
-                            onChange={(
-                              e,
-                            ) =>
-                              handleParameterChange(
-                                parameter.id,
-                                e.target
-                                  .value,
-                              )
-                            }
+                            label={parameter.parameter_name}
+                            value={parameterValues[parameter.id] ?? ""}
+                            onChange={(event) => handleParameterChange(parameter.id, event.target.value)}
                           />
                         </Grid>
                       );
-                    },
+                    })
                   )}
                 </Grid>
               </EnterpriseSectionCard>
             )}
 
             {activeStep === 3 && (
-              <EnterpriseSectionCard
-                title="Review & Submit"
-                subtitle="Verify asset information"
-              >
-                <Typography>
-                  <strong>
-                    Citizen:
-                  </strong>{" "}
-                  {
-                    selectedCitizen.full_name
-                  }
-                </Typography>
-
-                <Typography>
-                  <strong>
-                    Asset Name:
-                  </strong>{" "}
-                  {form.asset_name}
-                </Typography>
-
-                <Typography>
-                  <strong>
-                    Asset Type:
-                  </strong>{" "}
-                  {form.asset_type}
-                </Typography>
-
-                <Typography>
-                  <strong>
-                    Selected Taxes:
-                  </strong>{" "}
-                  {
-                    selectedTaxes.length
-                  }
-                </Typography>
+              <EnterpriseSectionCard title="Review & Submit" subtitle="Verify the asset registration details before saving.">
+                <Grid container spacing={2}>
+                  <Grid size={12}>
+                    <Typography><strong>Citizen:</strong> {selectedCitizen.full_name || "Not selected"}</Typography>
+                  </Grid>
+                  <Grid size={12}>
+                    <Typography><strong>Asset Name:</strong> {form.asset_name}</Typography>
+                  </Grid>
+                  <Grid size={12}>
+                    <Typography><strong>Asset Type:</strong> {form.asset_type}</Typography>
+                  </Grid>
+                  <Grid size={12}>
+                    <Typography><strong>Selected Taxes:</strong> {selectedTaxes.length}</Typography>
+                  </Grid>
+                  <Grid size={12}>
+                    <Typography><strong>Assessment Parameters:</strong> {Object.keys(parameterValues).length}</Typography>
+                  </Grid>
+                </Grid>
               </EnterpriseSectionCard>
             )}
 
@@ -578,9 +375,7 @@ export default function CreateAssetPage() {
                 color="inherit"
                 onClick={() => {
                   if (isDirty) {
-                    setShowExitDialog(
-                      true,
-                    );
+                    setShowExitDialog(true);
                   } else {
                     navigate("/assets");
                   }
@@ -590,49 +385,20 @@ export default function CreateAssetPage() {
               </Button>
 
               <Button
-                startIcon={
-                  <ArrowBackIcon />
-                }
-                disabled={
-                  activeStep === 0
-                }
-                onClick={() =>
-                  setActiveStep(
-                    activeStep - 1,
-                  )
-                }
+                startIcon={<ArrowBackIcon />}
+                disabled={activeStep === 0}
+                onClick={() => setActiveStep((prev) => prev - 1)}
               >
                 Previous
               </Button>
 
               {activeStep !== 3 ? (
-                <Button
-                  variant="contained"
-                  endIcon={
-                    <ArrowForwardIcon />
-                  }
-                  onClick={
-                    handleNext
-                  }
-                >
+                <Button variant="contained" endIcon={<ArrowForwardIcon />} onClick={handleNext}>
                   Continue
                 </Button>
               ) : (
-                <Button
-                  variant="contained"
-                  startIcon={
-                    <SaveIcon />
-                  }
-                  onClick={
-                    handleSave
-                  }
-                  disabled={
-                    saving
-                  }
-                >
-                  {saving
-                    ? "Registering..."
-                    : "Register Asset"}
+                <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} disabled={saving}>
+                  {saving ? "Registering..." : "Register Asset"}
                 </Button>
               )}
             </div>
@@ -646,51 +412,28 @@ export default function CreateAssetPage() {
               verification="PENDING"
               fullName={form.asset_name}
               city={form.asset_type}
-              mobile={
-                selectedCitizen.full_name ||
-                ""
-              }
+              mobile={selectedCitizen.full_name || ""}
             />
           </div>
         </div>
       </div>
 
-      <Dialog
-        open={showExitDialog}
-        onClose={() =>
-          setShowExitDialog(false)
-        }
-      >
-        <DialogTitle>
-          Unsaved Changes
-        </DialogTitle>
-
+      <Dialog open={showExitDialog} onClose={() => setShowExitDialog(false)}>
+        <DialogTitle>Unsaved Changes</DialogTitle>
         <DialogContent>
           <Typography>
-            You have unsaved
-            changes. Leaving this
-            page will discard
-            them.
+            You have unsaved changes on this page. If you leave now, all entered information will be lost.
           </Typography>
         </DialogContent>
-
         <DialogActions>
-          <Button
-            onClick={() =>
-              setShowExitDialog(
-                false,
-              )
-            }
-          >
-            Stay
-          </Button>
-
+          <Button onClick={() => setShowExitDialog(false)}>Stay</Button>
           <Button
             color="error"
             variant="contained"
-            onClick={() =>
-              navigate("/assets")
-            }
+            onClick={() => {
+              setShowExitDialog(false);
+              navigate("/assets");
+            }}
           >
             Leave Page
           </Button>

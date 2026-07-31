@@ -32,7 +32,7 @@ const LandingPage = () => {
           <button className="glass-btn" onClick={() => navigate("/login")}>
             Admin Login
           </button>
-          <button className="primary-btn">Citizen Portal</button>
+          <button className="primary-btn" onClick={() => navigate("/citizen-portal")}>Citizen Portal</button>
         </div>
       </motion.nav>
 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 
 import API from "../api/api";
 
@@ -10,11 +10,20 @@ export const TaxProvider = ({ children }) => {
   const loadTaxTypes = useCallback(async () => {
     try {
       const response = await API.get("/getTaxTypes");
-
       setTaxTypes(response.data.data || []);
     } catch (error) {
       console.error(error);
     }
+  }, []);
+
+  const addTaxType = useCallback(async (payload) => {
+    const response = await API.post("/addTaxType", payload);
+    return response.data.data;
+  }, []);
+
+  const deleteTaxType = useCallback(async (id) => {
+    const response = await API.delete(`/deleteTaxType/${id}`);
+    return response.data.data;
   }, []);
 
   return (
@@ -22,6 +31,8 @@ export const TaxProvider = ({ children }) => {
       value={{
         taxTypes,
         loadTaxTypes,
+        addTaxType,
+        deleteTaxType,
       }}
     >
       {children}

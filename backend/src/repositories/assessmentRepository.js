@@ -174,6 +174,43 @@ const getAssessmentById = (assessmentId, tenantId) => {
   });
 };
 
+const getAssessments = (tenantId) => {
+  return new Promise((resolve, reject) => {
+    db.all(
+      `
+      SELECT
+        ta.id,
+        ta.assessment_number,
+        ta.financial_year,
+        ta.calculated_amount,
+        ta.arrears_amount,
+        ta.penalty_amount,
+        ta.total_amount,
+        ta.assessment_status,
+        ta.assessment_date,
+        ta.due_date,
+        ta.outstanding_amount,
+        a.asset_code,
+        a.asset_name,
+        c.full_name AS citizen_name,
+        tt.tax_name
+      FROM tax_assessments ta
+      LEFT JOIN assets a ON a.id = ta.asset_id AND a.tenant_id = ta.tenant_id
+      LEFT JOIN citizens c ON c.id = ta.citizen_id AND c.tenant_id = ta.tenant_id
+      LEFT JOIN tax_types tt ON tt.id = ta.tax_type_id AND tt.tenant_id = ta.tenant_id
+      WHERE ta.tenant_id = ?
+      AND ta.is_deleted = 0
+      ORDER BY ta.created_at DESC
+      `,
+      [tenantId],
+      (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows || []);
+      },
+    );
+  });
+};
+
 module.exports = {
   getAssetById,
   getAssetTaxes,
@@ -182,4 +219,5 @@ module.exports = {
   getPreviousOutstanding,
   createAssessment,
   getAssessmentById,
+  getAssessments,
 };
