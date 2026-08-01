@@ -21,32 +21,19 @@ import { useNavigate } from "react-router-dom";
 import AdminLayout from "../../layouts/AdminLayout";
 import AdminSidebar from "../../components/AdminSidebar";
 
-import { getCitizens } from "../../services/citizenService";
+import { useAppData } from "../../context/AppDataContext";
 
 export default function CitizenListPage() {
   const navigate = useNavigate();
 
-  const [citizens, setCitizens] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { citizens, refreshCitizens, loading } = useAppData();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
   useEffect(() => {
-    loadCitizens();
-  }, []);
-
-  const loadCitizens = async () => {
-    try {
-      const data = await getCitizens();
-
-      setCitizens(data || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    refreshCitizens();
+  }, [refreshCitizens]);
 
   const filteredRows = citizens
     .filter((citizen) => {

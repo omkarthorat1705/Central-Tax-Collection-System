@@ -4,6 +4,8 @@ const controller = require("../controllers/citizenPortalController");
 const citizenAuthMiddleware = require("../middleware/citizenAuthMiddleware");
 
 router.post("/citizen/login", controller.citizenLogin);
+router.put("/citizen/password", citizenAuthMiddleware, controller.changeCitizenPassword);
+router.post("/citizen/payment", citizenAuthMiddleware, controller.makeCitizenPayment);
 router.get("/citizen/portal", citizenAuthMiddleware, controller.getCitizenPortalSummary);
 
 module.exports = router;

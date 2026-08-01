@@ -1,3 +1,10 @@
+# GitHub Copilot Behavior Rules
+
+- **Strict Functional Focus**: Only suggest code that directly addresses the active task or cursor placement. Avoid generating unasked helper functions or full-file rewrites.
+- **No Redundant Boilerplate**: Do not generate duplicate interfaces, excess variables, or placeholder logic unless explicitly requested.
+- **Keep Existing Code**: When modifying a block, do not erase adjacent, unrelated logic. Prioritize localized, incremental diffs.
+- **Code Quality**: Ensure all code adheres strictly to standard linting patterns. Avoid deeply nested conditional logic.
+
 # Central Tax Collection System (CTCS)
 
 ## Project Overview

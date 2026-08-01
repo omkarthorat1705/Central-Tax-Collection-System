@@ -13,6 +13,7 @@ import { ParametersProvider } from "./context/ParametersContext";
 import { RulesProvider } from "./context/RulesContext";
 
 import { CitizensProvider } from "./context/CitizensContext";
+import { AppDataProvider } from "./context/AppDataContext";
 import "./styles/enterprise-grid.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
@@ -22,7 +23,9 @@ root.render(
     <ParametersProvider>
       <RulesProvider>
         <CitizensProvider>
-          <App />
+          <AppDataProvider>
+            <App />
+          </AppDataProvider>
         </CitizensProvider>
       </RulesProvider>
     </ParametersProvider>

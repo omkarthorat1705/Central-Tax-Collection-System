@@ -5,13 +5,14 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 import AdminLayout from "../layouts/AdminLayout";
+import API from "../api/api";
 import AdminSidebar from "../components/AdminSidebar";
 import EnterpriseSectionCard from "../components/enterprise/EnterpriseSectionCard";
 
-import { useTaxContext } from "../context/TaxContext";
+import { useAppData } from "../context/AppDataContext";
 
 export default function TaxTypesPage() {
-  const { taxTypes, loadTaxTypes, addTaxType, deleteTaxType } = useTaxContext();
+  const { taxTypes, refreshTaxTypes } = useAppData();
 
   const [formData, setFormData] = useState({
     tax_code: "",
@@ -22,8 +23,8 @@ export default function TaxTypesPage() {
   const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
-    loadTaxTypes();
-  }, [loadTaxTypes]);
+    refreshTaxTypes();
+  }, [refreshTaxTypes]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -38,9 +39,9 @@ export default function TaxTypesPage() {
 
     try {
       setSubmitting(true);
-      await addTaxType(formData);
+      await API.post("/addTaxType", formData);
       setFormData({ tax_code: "", tax_name: "", description: "" });
-      await loadTaxTypes();
+      await refreshTaxTypes();
     } catch (error) {
       console.error(error);
       alert("Failed to add tax type");
@@ -52,8 +53,8 @@ export default function TaxTypesPage() {
   const handleDelete = async (id) => {
     try {
       setDeletingId(id);
-      await deleteTaxType(id);
-      await loadTaxTypes();
+      await API.delete(`/deleteTaxType/${id}`);
+      await refreshTaxTypes();
     } catch (error) {
       console.error(error);
       alert("Failed to delete tax type");

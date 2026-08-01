@@ -19,6 +19,7 @@ const AssessmentsPage = () => {
   const [assets, setAssets] = useState([]);
   const [selectedAsset, setSelectedAsset] = useState("");
   const [financialYear, setFinancialYear] = useState("2026-2027");
+  const [helperText, setHelperText] = useState("Select an asset and generate an assessment for the current year.");
   const [generatedAssessments, setGeneratedAssessments] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -70,6 +71,7 @@ const AssessmentsPage = () => {
       });
       await loadAssessments();
       setSelectedAsset("");
+      setHelperText("Assessment generated successfully. Review it in the ledger below.");
       alert("Assessment generated successfully");
     } catch (error) {
       console.error(error);
@@ -99,7 +101,13 @@ const AssessmentsPage = () => {
                 fullWidth
                 label="Asset *"
                 value={selectedAsset}
-                onChange={(event) => setSelectedAsset(event.target.value)}
+                onChange={(event) => {
+                  setSelectedAsset(event.target.value);
+                  if (event.target.value) {
+                    setHelperText("Asset selected. You can now generate the assessment.");
+                  }
+                }}
+                helperText={assets.length === 0 ? "No assets are available yet. Create one from the Assets module first." : helperText}
               >
                 {assets.map((asset) => (
                   <MenuItem key={asset.id} value={asset.id}>
@@ -115,6 +123,7 @@ const AssessmentsPage = () => {
                 label="Financial Year"
                 value={financialYear}
                 onChange={(event) => setFinancialYear(event.target.value)}
+                helperText="Use the current cycle or the next cycle to create a new assessment."
               >
                 <MenuItem value="2025-2026">2025-2026</MenuItem>
                 <MenuItem value="2026-2027">2026-2027</MenuItem>
@@ -143,7 +152,7 @@ const AssessmentsPage = () => {
               </Grid>
             ) : generatedAssessments.length === 0 ? (
               <Grid size={12}>
-                <Typography color="text.secondary">No assessments found yet.</Typography>
+                <Typography color="text.secondary">No assessments found yet. Generate one from the selector above to populate this ledger.</Typography>
               </Grid>
             ) : (
               generatedAssessments.map((item) => (

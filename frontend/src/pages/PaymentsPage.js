@@ -19,6 +19,7 @@ const PaymentsPage = () => {
   const [selectedAssessment, setSelectedAssessment] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMode, setPaymentMode] = useState("CASH");
+  const [helperText, setHelperText] = useState("Choose an outstanding assessment and enter the amount to collect.");
   const [payments, setPayments] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -64,6 +65,7 @@ const PaymentsPage = () => {
       });
       setPaymentAmount("");
       setSelectedAssessment("");
+      setHelperText("Payment recorded successfully. It will appear in the payment ledger below.");
       await loadPayments();
       await loadAssessments();
       alert("Payment collected successfully");
@@ -95,7 +97,13 @@ const PaymentsPage = () => {
                 fullWidth
                 label="Assessment *"
                 value={selectedAssessment}
-                onChange={(event) => setSelectedAssessment(event.target.value)}
+                onChange={(event) => {
+                  setSelectedAssessment(event.target.value);
+                  if (event.target.value) {
+                    setHelperText("Assessment selected. Enter the payment amount to record the transaction.");
+                  }
+                }}
+                helperText={assessments.length === 0 ? "Generate an assessment first so there is an outstanding balance to collect." : helperText}
               >
                 {assessments.map((item) => (
                   <MenuItem key={item.id} value={item.id}>
@@ -111,6 +119,7 @@ const PaymentsPage = () => {
                 label="Payment Amount *"
                 value={paymentAmount}
                 onChange={(event) => setPaymentAmount(event.target.value)}
+                helperText="Enter an amount that is less than or equal to the assessment balance."
               />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
@@ -149,7 +158,7 @@ const PaymentsPage = () => {
               </Grid>
             ) : payments.length === 0 ? (
               <Grid size={12}>
-                <Typography color="text.secondary">No payments recorded yet.</Typography>
+                <Typography color="text.secondary">No payments recorded yet. Use the form above to collect the first payment.</Typography>
               </Grid>
             ) : (
               payments.map((item) => (

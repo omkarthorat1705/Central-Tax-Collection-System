@@ -106,9 +106,15 @@ CREATE TABLE IF NOT EXISTS parameters (
 
     possible_values TEXT,
 
+    required_flag INTEGER DEFAULT 0,
+
     is_required INTEGER DEFAULT 0,
 
     display_order INTEGER,
+
+    asset_type TEXT,
+
+    status TEXT DEFAULT 'ACTIVE',
 
     created_by INTEGER,
 
@@ -145,6 +151,8 @@ CREATE TABLE IF NOT EXISTS rules (
     rule_name TEXT,
 
     formula_expression TEXT,
+
+    output_value TEXT,
 
     priority INTEGER DEFAULT 1,
 

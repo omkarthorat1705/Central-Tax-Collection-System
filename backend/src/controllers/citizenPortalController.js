@@ -30,7 +30,18 @@ const citizenLogin = asyncHandler(async (req, res) => {
     return res.status(401).json({ success: false, error: "Invalid citizen credentials" });
   }
 
-  const storedPassword = citizen.portal_password_hash || "";
+  const portalCredential = await new Promise((resolve, reject) => {
+    db.get(
+      "SELECT * FROM citizen_portal_credentials WHERE citizen_id = ?",
+      [citizen.id],
+      (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      },
+    );
+  });
+
+  const storedPassword = portalCredential?.password_hash || "";
   const passwordMatch = storedPassword ? await bcrypt.compare(password, storedPassword) : false;
 
   if (!passwordMatch) {
@@ -58,6 +69,105 @@ const citizenLogin = asyncHandler(async (req, res) => {
       tenant_name: citizen.tenant_name,
     },
   });
+});
+
+const changeCitizenPassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const citizenId = req.citizen.citizen_id;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, error: "Both current and new password are required" });
+  }
+
+  const citizen = await new Promise((resolve, reject) => {
+    db.get("SELECT * FROM citizens WHERE id = ? AND is_deleted = 0", [citizenId], (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+
+  const portalCredential = await new Promise((resolve, reject) => {
+    db.get("SELECT * FROM citizen_portal_credentials WHERE citizen_id = ?", [citizenId], (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+
+  if (!citizen || !portalCredential?.password_hash) {
+    return res.status(400).json({ success: false, error: "Portal password is not configured" });
+  }
+
+  const passwordMatch = await bcrypt.compare(currentPassword, portalCredential.password_hash);
+  if (!passwordMatch) {
+    return res.status(401).json({ success: false, error: "Current password is incorrect" });
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await new Promise((resolve, reject) => {
+    db.run(
+      "UPDATE citizen_portal_credentials SET password_hash = ?, is_password_changed = 1, updated_at = CURRENT_TIMESTAMP WHERE citizen_id = ?",
+      [hashedPassword, citizenId],
+      (err) => {
+        if (err) reject(err);
+        else resolve();
+      },
+    );
+  });
+
+  return successResponse(res, { changed: true }, "Password updated successfully");
+});
+
+const makeCitizenPayment = asyncHandler(async (req, res) => {
+  const { assessment_id, payment_amount, payment_mode } = req.body;
+  const tenantId = req.citizen.tenant_id;
+
+  const assessment = await new Promise((resolve, reject) => {
+    db.get("SELECT * FROM tax_assessments WHERE id = ? AND tenant_id = ? AND is_deleted = 0", [assessment_id, tenantId], (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+
+  if (!assessment || assessment.citizen_id !== req.citizen.citizen_id) {
+    return res.status(404).json({ success: false, error: "Assessment not found" });
+  }
+
+  const totalPaid = await new Promise((resolve, reject) => {
+    db.get("SELECT IFNULL(SUM(payment_amount), 0) AS total_paid FROM tax_payments WHERE assessment_id = ? AND tenant_id = ?", [assessment_id, tenantId], (err, row) => {
+      if (err) reject(err);
+      else resolve(row?.total_paid || 0);
+    });
+  });
+
+  const remaining = Number(assessment.total_amount) - Number(totalPaid);
+  if (Number(payment_amount) > remaining) {
+    return res.status(400).json({ success: false, error: "Payment exceeds remaining balance" });
+  }
+
+  const paymentNumber = `CIT-` + Date.now();
+  const paymentId = await new Promise((resolve, reject) => {
+    db.run(
+      "INSERT INTO tax_payments (tenant_id, assessment_id, payment_number, payment_date, payment_amount, payment_mode, collected_by) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [tenantId, assessment_id, paymentNumber, new Date().toISOString(), payment_amount, payment_mode, req.citizen.citizen_id],
+      function (err) {
+        if (err) reject(err);
+        else resolve(this.lastID);
+      },
+    );
+  });
+
+  const updatedPaid = Number(totalPaid) + Number(payment_amount);
+  const newStatus = updatedPaid >= Number(assessment.total_amount) ? "PAID" : "PARTIAL";
+
+  await new Promise((resolve, reject) => {
+    db.run("UPDATE tax_assessments SET assessment_status = ? WHERE id = ? AND tenant_id = ?", [newStatus, assessment_id, tenantId], (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+
+  return successResponse(res, { payment_id: paymentId, payment_number: paymentNumber, assessment_status: newStatus }, "Payment recorded successfully");
 });
 
 const getCitizenPortalSummary = asyncHandler(async (req, res) => {
@@ -101,5 +211,7 @@ const getCitizenPortalSummary = asyncHandler(async (req, res) => {
 
 module.exports = {
   citizenLogin,
+  changeCitizenPassword,
+  makeCitizenPayment,
   getCitizenPortalSummary,
 };

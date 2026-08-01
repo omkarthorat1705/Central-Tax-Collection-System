@@ -19,7 +19,7 @@ import {
 import AdminLayout from "../layouts/AdminLayout";
 import AdminSidebar from "../components/AdminSidebar";
 
-import { getRevenueSummary } from "../services/dashboardService";
+import { useAppData } from "../context/AppDataContext";
 // import LogoutIcon from "@mui/icons-material/Logout";
 // import { IconButton } from "@mui/material";
 import { useNavigate } from "react-router-dom";
@@ -34,58 +34,39 @@ const formatCurrency = (amount) => {
 };
 
 const AdminDashboard = () => {
-  const [loading, setLoading] = useState(true);
-
-  const [summary, setSummary] = useState({
-    total_assessment: 0,
-    total_collection: 0,
-    total_pending: 0,
-    partial_cases: 0,
-  });
+  const { dashboardSummary, loading, refreshDashboard, refreshAll } = useAppData();
 
   // const user = getCurrentUser();
 
   useEffect(() => {
-    loadDashboard();
-  }, []);
-
-  const loadDashboard = async () => {
-    try {
-      const data = await getRevenueSummary();
-
-      setSummary(data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    refreshAll();
+  }, [refreshAll]);
 
   const cards = [
     {
       title: "Total Assessments",
-      value: summary.total_assessment,
+      value: dashboardSummary.total_assessment,
       icon: <Assessment sx={{ fontSize: 42 }} />,
       color: "#38bdf8",
     },
 
     {
       title: "Revenue Collected",
-      value: formatCurrency(summary.total_collection),
+      value: formatCurrency(dashboardSummary.total_collection),
       icon: <Payments sx={{ fontSize: 42 }} />,
       color: "#22c55e",
     },
 
     {
       title: "Pending Revenue",
-      value: formatCurrency(summary.total_pending),
+      value: formatCurrency(dashboardSummary.total_pending),
       icon: <AccountBalance sx={{ fontSize: 42 }} />,
       color: "#f59e0b",
     },
 
     {
       title: "Partial Cases",
-      value: summary.partial_cases,
+      value: dashboardSummary.partial_cases,
       icon: <People sx={{ fontSize: 42 }} />,
       color: "#a855f7",
     },
@@ -347,6 +328,10 @@ const AdminDashboard = () => {
 
                 <Typography sx={{ mt: 2 }}>
                   • Multi-Tenant Security Enabled
+                </Typography>
+
+                <Typography sx={{ mt: 2 }}>
+                  • Live data refreshed across dashboard, tax, and citizen modules
                 </Typography>
               </Box>
             </CardContent>

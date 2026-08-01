@@ -1,109 +1,36 @@
-const db = require("../config/db");
 const asyncHandler = require("../utils/asyncHandler");
-
-// ======================================
-// GET TAX TYPES
-// ======================================
+const { successResponse, errorResponse } = require("../utils/responseHandler");
+const taxConfigurationService = require("../services/taxConfigurationService");
 
 const getTaxTypes = asyncHandler(async (req, res) => {
-  const query = `
-    SELECT
-      id,
-      tax_code,
-      tax_name,
-      description,
-      is_active,
-      created_at
-    FROM tax_types
-    WHERE is_deleted = 0
-    ORDER BY id ASC
-  `;
-
-  db.all(query, [], (err, rows) => {
-    if (err) {
-      console.error(err);
-
-      return errorResponse(res, "Failed to fetch tax types");
-    }
-
-    const {
-      successResponse,
-      errorResponse,
-    } = require("../utils/responseHandler");
-    return successResponse(res, rows);
-  });
+  const data = await taxConfigurationService.getTaxTypes(req.tenant.tenant_id);
+  return successResponse(res, data);
 });
-
-// ======================================
-// ADD TAX TYPE
-// ======================================
 
 const addTaxType = asyncHandler(async (req, res) => {
   const { tax_code, tax_name, description } = req.body;
 
-  if (!tax_name) {
-    return errorResponse(res, "Tax Name is required");
+  if (!tax_name?.trim()) {
+    return errorResponse(res, "Tax Name is required", 400);
   }
 
-  const query = `
-    INSERT INTO tax_types (
-      tenant_id,
-      tax_code,
-      tax_name,
-      description,
-      created_by
-    )
-    VALUES (?, ?, ?, ?, ?)
-  `;
+  const payload = {
+    tenant_id: req.tenant.tenant_id,
+    tax_code: tax_code || null,
+    tax_name: tax_name.trim(),
+    description: description || null,
+    created_by: req.user?.user_id || 1,
+  };
 
-  db.run(
-    query,
-    [1, tax_code || null, tax_name, description || null, 1],
+  const id = await taxConfigurationService.addTaxType(payload);
 
-    function (err) {
-      if (err) {
-        console.error(err);
-
-        return errorResponse(res, "Failed to add tax type");
-      }
-
-      return successResponse(res, {
-        message: "Tax Type Added Successfully",
-        id: this.lastID,
-      });
-    },
-  );
+  return successResponse(res, { id }, "Tax Type Added Successfully");
 });
 
-// ======================================
-// DELETE TAX TYPE
-// ======================================
-
 const deleteTaxType = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  await taxConfigurationService.deleteTaxType(req.tenant.tenant_id, req.params.id);
 
-  const query = `
-    UPDATE tax_types
-    SET is_deleted = 1
-    WHERE id = ?
-  `;
-
-  db.run(
-    query,
-    [id],
-
-    function (err) {
-      if (err) {
-        console.error(err);
-
-        return errorResponse(res, "Failed to delete tax type");
-      }
-
-      return successResponse(res, {
-        message: "Tax Type Deleted",
-      });
-    },
-  );
+  return successResponse(res, { deleted: true }, "Tax Type Deleted");
 });
 
 module.exports = {

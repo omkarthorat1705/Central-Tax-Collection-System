@@ -1,3 +1,5 @@
+const bcrypt = require("bcryptjs");
+const db = require("../config/db");
 const citizenRepository = require("../repositories/citizenRepository");
 
 const { encryptValue, decryptValue } = require("../utils/encryptionUtil");
@@ -39,9 +41,24 @@ const addCitizen = async (payload) => {
 
   const id = await citizenRepository.createCitizen(payload);
 
+  const temporaryPassword = `${payload.citizen_code}`;
+  const passwordHash = await bcrypt.hash(temporaryPassword, 10);
+
+  await new Promise((resolve, reject) => {
+    db.run(
+      "INSERT INTO citizen_portal_credentials (citizen_id, password_hash, is_password_changed) VALUES (?, ?, ?)",
+      [id, passwordHash, 0],
+      (err) => {
+        if (err) reject(err);
+        else resolve();
+      },
+    );
+  });
+
   return {
     id,
     citizen_code: payload.citizen_code,
+    temporary_password: temporaryPassword,
   };
 };
 

@@ -26,14 +26,15 @@ const getParameters = asyncHandler(async (req, res) => {
       asset_type,
       status
     FROM parameters
-    WHERE is_deleted = 0
+    WHERE tenant_id = ?
+    AND is_deleted = 0
   `;
 
-  const queryParams = [];
+  const queryParams = [req.tenant.tenant_id];
 
   // Optional filter
   if (taxTypeId) {
-    query += `AND tax_type_id = ?`;
+    query += ` AND tax_type_id = ?`;
     queryParams.push(taxTypeId);
   }
 
@@ -72,13 +73,14 @@ const getAssetParameters = asyncHandler(async (req, res) => {
       required_flag,
       display_order
     FROM parameters
-    WHERE is_deleted = 0
-    AND status = 'ACTIVE'
+    WHERE tenant_id = ?
+    AND is_deleted = 0
+    AND COALESCE(status, 'ACTIVE') = 'ACTIVE'
     AND tax_type_id IN (${placeholders})
     ORDER BY display_order ASC
   `;
 
-  db.all(query, tax_type_ids, (err, rows) => {
+  db.all(query, [req.tenant.tenant_id, ...tax_type_ids], (err, rows) => {
     if (err) {
       console.error(err);
       return errorResponse(res, "Failed to fetch parameters");
@@ -148,6 +150,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ui_component || null,
       validation_rules || null,
       possible_values || null,
+      required_flag ? 1 : 0,
       required_flag ? 1 : 0,
       display_order || 1,
       asset_type || null,

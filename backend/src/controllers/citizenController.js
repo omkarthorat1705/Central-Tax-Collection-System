@@ -5,19 +5,22 @@ const asyncHandler = require("../utils/asyncHandler");
 const { successResponse } = require("../utils/responseHandler");
 
 const addCitizen = asyncHandler(async (req, res) => {
+  if (!req.body.full_name?.trim()) {
+    throw new Error("Citizen name is required");
+  }
+
+  if (!req.body.mobile_number?.trim()) {
+    throw new Error("Mobile number is required");
+  }
+
   const payload = {
     ...req.body,
+    full_name: req.body.full_name?.trim(),
+    mobile_number: req.body.mobile_number?.trim(),
     tenant_id: req.tenant.tenant_id,
   };
 
   const result = await citizenService.addCitizen(payload);
-  if (!req.body.full_name) {
-    throw new Error("Citizen name is required");
-  }
-
-  if (!req.body.mobile_number) {
-    throw new Error("Mobile number is required");
-  }
 
   return successResponse(res, result, "Citizen Created Successfully");
 });
