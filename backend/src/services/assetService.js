@@ -1,3 +1,5 @@
+// backend/src/services/assetService.js
+
 const assetRepository = require("../repositories/assetRepository");
 
 const getAssets = async (tenantId) => {
@@ -6,6 +8,10 @@ const getAssets = async (tenantId) => {
 
 const getAssetById = async (assetId, tenantId) => {
   const asset = await assetRepository.getAssetById(assetId, tenantId);
+
+  if (!asset) {
+    throw new Error("Asset not found");
+  }
 
   const taxes = await assetRepository.getAssetTaxes(assetId);
 
@@ -19,7 +25,7 @@ const getAssetById = async (assetId, tenantId) => {
 };
 
 const registerAsset = async (payload) => {
-  const assetCode = "AST-" + String(Date.now()).slice(-6);
+  const assetCode = `AST-${Date.now().toString().slice(-6)}`;
 
   const assetId = await assetRepository.createAsset({
     ...payload,
@@ -28,36 +34,85 @@ const registerAsset = async (payload) => {
     is_deleted: 0,
   });
 
-  await assetRepository.createAssetTaxMappings(
-    assetId,
-    payload.tax_type_ids,
-    payload.tenant_id,
-  );
+  if (
+    Array.isArray(payload.tax_type_ids) &&
+    payload.tax_type_ids.length
+  ) {
+    await assetRepository.createAssetTaxMappings(
+      assetId,
+      payload.tax_type_ids,
+      payload.tenant_id,
+    );
+  }
 
-  await assetRepository.createAssetParameterValues(
-    assetId,
-    payload.parameter_values,
-    payload.tenant_id,
-  );
+  if (
+    payload.parameter_values &&
+    Object.keys(payload.parameter_values).length
+  ) {
+    await assetRepository.createAssetParameterValues(
+      assetId,
+      payload.parameter_values,
+      payload.tenant_id,
+    );
+  }
 
   return {
     asset_id: assetId,
+    asset_code: assetCode,
   };
 };
 
-const updateAsset = async (assetId, payload, tenantId) => {
+const updateAsset = async (
+  assetId,
+  payload,
+  tenantId,
+) => {
   await assetRepository.updateAsset(assetId, {
     ...payload,
     tenant_id: tenantId,
   });
 
+  if (Array.isArray(payload.tax_type_ids)) {
+    await assetRepository.replaceAssetTaxMappings(
+      assetId,
+      payload.tax_type_ids,
+      tenantId,
+    );
+  }
+
+  if (payload.parameter_values) {
+    await assetRepository.replaceAssetParameterValues(
+      assetId,
+      payload.parameter_values,
+      tenantId,
+    );
+  }
+
   return {
     asset_id: assetId,
   };
 };
 
-const getAssetTypes = async (tenantId) => {
-  return await assetRepository.getAssetTypes(tenantId);
+const deleteAsset = async (
+  assetId,
+  tenantId,
+) => {
+  await assetRepository.deleteAsset(
+    assetId,
+    tenantId,
+  );
+
+  return {
+    asset_id: assetId,
+  };
+};
+
+const getAssetTypes = async (
+  tenantId,
+) => {
+  return assetRepository.getAssetTypes(
+    tenantId,
+  );
 };
 
 module.exports = {
@@ -65,5 +120,6 @@ module.exports = {
   getAssetById,
   registerAsset,
   updateAsset,
+  deleteAsset,
   getAssetTypes,
 };
