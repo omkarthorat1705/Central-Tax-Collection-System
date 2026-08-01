@@ -138,7 +138,11 @@ const createAssetTaxMappings = (assetId, taxTypeIds, tenantId) => {
 // SAVE PARAMETER VALUES
 // =====================================
 
-const createAssetParameterValues = (assetId, parameterValues, tenantId) => {
+const createAssetParameterValues = (
+  assetId,
+  parameterValues,
+  tenantId,
+) => {
   const records = Object.entries(parameterValues || {});
 
   return Promise.all(
@@ -157,7 +161,12 @@ const createAssetParameterValues = (assetId, parameterValues, tenantId) => {
             )
             VALUES (?, ?, ?, ?, 0)
             `,
-            [tenantId, assetId, parameterId, parameterValue],
+            [
+              tenantId,
+              assetId,
+              parameterId,
+              parameterValue,
+            ],
             (err) => {
               if (err) reject(err);
               else resolve();
@@ -179,10 +188,8 @@ const getAssetTaxes = (assetId) => {
       SELECT
         tt.*
       FROM asset_tax_mapping atm
-
       INNER JOIN tax_types tt
       ON tt.id = atm.tax_type_id
-
       WHERE atm.citizen_asset_id = ?
       AND atm.is_deleted = 0
       `,
@@ -240,6 +247,7 @@ const updateAsset = (assetId, payload) => {
         asset_address = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
+      AND tenant_id = ?
       `,
       [
         payload.citizen_id,
@@ -247,6 +255,7 @@ const updateAsset = (assetId, payload) => {
         payload.asset_type,
         payload.asset_address,
         assetId,
+        payload.tenant_id,
       ],
       (err) => {
         if (err) reject(err);
@@ -256,19 +265,76 @@ const updateAsset = (assetId, payload) => {
   });
 };
 
+const replaceAssetTaxMappings = (
+  assetId,
+  taxTypeIds,
+  tenantId,
+) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `DELETE FROM asset_tax_mapping WHERE citizen_asset_id=?`,
+      [assetId],
+      async (err) => {
+        if (err) return reject(err);
+
+        try {
+          await createAssetTaxMappings(
+            assetId,
+            taxTypeIds,
+            tenantId,
+          );
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      },
+    );
+  });
+};
+
+const replaceAssetParameterValues = (
+  assetId,
+  parameterValues,
+  tenantId,
+) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `DELETE FROM asset_parameter_values WHERE citizen_asset_id=?`,
+      [assetId],
+      async (err) => {
+        if (err) return reject(err);
+
+        try {
+          await createAssetParameterValues(
+            assetId,
+            parameterValues,
+            tenantId,
+          );
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      },
+    );
+  });
+};
+
 // =====================================
 // DELETE ASSET
 // =====================================
 
-const deleteAsset = (assetId) => {
+const deleteAsset = (assetId, tenantId) => {
   return new Promise((resolve, reject) => {
     db.run(
       `
       UPDATE citizen_assets
-      SET is_deleted = 1
+      SET
+        is_deleted = 1,
+        updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
+      AND tenant_id = ?
       `,
-      [assetId],
+      [assetId, tenantId],
       (err) => {
         if (err) reject(err);
         else resolve();
@@ -276,6 +342,10 @@ const deleteAsset = (assetId) => {
     );
   });
 };
+
+// =====================================
+// ASSET TYPES
+// =====================================
 
 const getAssetTypes = (tenantId) => {
   return new Promise((resolve, reject) => {
@@ -308,6 +378,8 @@ module.exports = {
   getAssetTaxes,
   getAssetParameterValues,
   updateAsset,
+  replaceAssetTaxMappings,
+  replaceAssetParameterValues,
   deleteAsset,
   getAssetTypes,
 };
