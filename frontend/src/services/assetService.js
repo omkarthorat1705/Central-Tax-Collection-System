@@ -1,6 +1,7 @@
 import API from "../api/api";
 
-const extractData = (response) => response?.data?.data ?? response?.data ?? [];
+const extractData = (response) =>
+  response?.data?.data ?? response?.data ?? [];
 
 export const getAssets = async () => {
   const response = await API.get("/assets/getAssets");
@@ -22,6 +23,11 @@ export const updateAsset = async (assetId, payload) => {
   return extractData(response);
 };
 
+export const deleteAsset = async (assetId) => {
+  const response = await API.delete(`/assets/${assetId}`);
+  return extractData(response);
+};
+
 export const getAssetTypes = async () => {
   const response = await API.get("/assets/getAssetTypes");
   return extractData(response);
@@ -32,10 +38,11 @@ export const getTaxTypes = async () => {
   return extractData(response);
 };
 
-export const getAssetParameters = async (taxTypeIds) => {
-  const response = await API.post("/getAssetParameters", {
-    tax_type_ids: taxTypeIds,
-  });
+export const getAssetParameters = async (payload) => {
+  const response = await API.post(
+    "/getAssetParameters",
+    payload,
+  );
 
   return extractData(response);
 };
@@ -45,6 +52,7 @@ const assetService = {
   getAssetById,
   createAsset,
   updateAsset,
+  deleteAsset,
   getAssetTypes,
   getTaxTypes,
   getAssetParameters,
