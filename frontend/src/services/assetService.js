@@ -1,28 +1,35 @@
 import API from "../api/api";
 
+const extractData = (response) => response?.data?.data ?? response?.data ?? [];
+
 export const getAssets = async () => {
-  const response = await API.get("/getAssets");
-  return response.data.data || [];
+  const response = await API.get("/assets/getAssets");
+  return extractData(response);
 };
 
 export const getAssetById = async (assetId) => {
   const response = await API.get(`/assets/${assetId}`);
-  return response.data.data || null;
+  return extractData(response);
 };
 
 export const createAsset = async (payload) => {
-  const response = await API.post("/registerAsset", payload);
-  return response.data.data;
+  const response = await API.post("/assets/registerAsset", payload);
+  return extractData(response);
 };
 
 export const updateAsset = async (assetId, payload) => {
   const response = await API.put(`/assets/${assetId}`, payload);
-  return response.data.data;
+  return extractData(response);
+};
+
+export const getAssetTypes = async () => {
+  const response = await API.get("/assets/getAssetTypes");
+  return extractData(response);
 };
 
 export const getTaxTypes = async () => {
   const response = await API.get("/getTaxTypes");
-  return response.data.data || [];
+  return extractData(response);
 };
 
 export const getAssetParameters = async (taxTypeIds) => {
@@ -30,20 +37,17 @@ export const getAssetParameters = async (taxTypeIds) => {
     tax_type_ids: taxTypeIds,
   });
 
-  return response.data.data || [];
+  return extractData(response);
 };
 
-export const getAssetTypes = async () => {
-  const response = await API.get("/getAssetTypes");
-  return response.data.data || [];
-};
-
-export default {
+const assetService = {
   getAssets,
   getAssetById,
   createAsset,
   updateAsset,
+  getAssetTypes,
   getTaxTypes,
   getAssetParameters,
-  getAssetTypes,
 };
+
+export default assetService;
