@@ -32,7 +32,12 @@ import EnterpriseSummaryPanel from "../../components/enterprise/EnterpriseSummar
 import assetService from "../../services/assetService";
 import { getCitizens } from "../../services/citizenService";
 
-const steps = ["Asset Details", "Tax Assignment", "Assessment Parameters", "Review"];
+const steps = [
+  "Asset Details",
+  "Tax Assignment",
+  "Assessment Parameters",
+  "Review",
+];
 
 export default function CreateAssetPage() {
   const navigate = useNavigate();
@@ -61,19 +66,29 @@ export default function CreateAssetPage() {
 
     const loadInitialData = async () => {
       try {
-        const [citizenData, assetTypeData, taxData] = await Promise.all([
-          getCitizens(),
-          assetService.getAssetTypes(),
-          assetService.getTaxTypes(),
-        ]);
+        const citizenData = await getCitizens();
 
-        if (isMounted) {
-          setCitizens(citizenData || []);
-          setAssetTypes(assetTypeData || []);
-          setTaxTypes(taxData || []);
-        }
+        const assetTypeData = await assetService.getAssetTypes();
+
+        const taxData = await assetService.getTaxTypes();
+
+        setCitizens(
+          Array.isArray(citizenData) ? citizenData : citizenData?.data || [],
+        );
+
+        setAssetTypes(
+          Array.isArray(assetTypeData)
+            ? assetTypeData
+            : assetTypeData?.data || [],
+        );
+
+        setTaxTypes(Array.isArray(taxData) ? taxData : taxData?.data || []);
       } catch (error) {
         console.error(error);
+
+        setCitizens([]);
+        setAssetTypes([]);
+        setTaxTypes([]);
       }
     };
 
@@ -92,23 +107,31 @@ export default function CreateAssetPage() {
   const handleTaxSelection = async (taxId) => {
     setIsDirty(true);
 
-    const updatedTaxes = selectedTaxes.includes(taxId)
-      ? selectedTaxes.filter((id) => id !== taxId)
-      : [...selectedTaxes, taxId];
+    const updatedTaxes = selectedTaxes.includes(Number(taxId))
+      ? selectedTaxes.filter((id) => id !== Number(taxId))
+      : [...selectedTaxes, Number(taxId)];
 
     setSelectedTaxes(updatedTaxes);
 
     try {
-      const parameterData = await assetService.getAssetParameters(updatedTaxes);
+      const parameterData = await assetService.getAssetParameters({
+        tax_type_ids: updatedTaxes,
+      });
       setParameters(parameterData || []);
     } catch (error) {
       console.error(error);
-      setErrors((prev) => ({ ...prev, taxes: "Unable to load assessment parameters." }));
+      setErrors((prev) => ({
+        ...prev,
+        taxes: "Unable to load assessment parameters.",
+      }));
     }
   };
 
   const handleParameterChange = (parameterId, value) => {
-    setParameterValues((prev) => ({ ...prev, [parameterId]: value }));
+    setParameterValues((prev) => ({
+      ...prev,
+      [Number(parameterId)]: value,
+    }));
   };
 
   const calculateProgress = () => {
@@ -169,8 +192,11 @@ export default function CreateAssetPage() {
       setSaving(true);
 
       await assetService.createAsset({
-        ...form,
-        tax_type_ids: selectedTaxes,
+        citizen_id: Number(form.citizen_id),
+        asset_name: form.asset_name.trim(),
+        asset_type_id: Number(form.asset_type),
+        asset_address: form.asset_address.trim(),
+        tax_type_ids: selectedTaxes.map(Number),
         parameter_values: parameterValues,
       });
 
@@ -185,7 +211,10 @@ export default function CreateAssetPage() {
     }
   };
 
-  const selectedCitizen = citizens.find((citizen) => String(citizen.id) === String(form.citizen_id)) || {};
+  const selectedCitizen =
+    citizens.find(
+      (citizen) => String(citizen.id) === String(form.citizen_id),
+    ) || {};
 
   return (
     <AdminLayout sidebar={<AdminSidebar />} pageTitle="Asset Registration">
@@ -210,7 +239,10 @@ export default function CreateAssetPage() {
         <div className="citizen-body">
           <div className="citizen-form">
             {activeStep === 0 && (
-              <EnterpriseSectionCard title="Asset Information" subtitle="Register the primary asset details.">
+              <EnterpriseSectionCard
+                title="Asset Information"
+                subtitle="Register the primary asset details."
+              >
                 <Grid container spacing={3}>
                   <Grid size={12}>
                     <TextField
@@ -220,7 +252,9 @@ export default function CreateAssetPage() {
                       value={form.citizen_id}
                       error={!!errors.citizen_id}
                       helperText={errors.citizen_id}
-                      onChange={(event) => handleChange("citizen_id", event.target.value)}
+                      onChange={(event) =>
+                        handleChange("citizen_id", event.target.value)
+                      }
                     >
                       {citizens.map((citizen) => (
                         <MenuItem key={citizen.id} value={citizen.id}>
@@ -237,7 +271,9 @@ export default function CreateAssetPage() {
                       value={form.asset_name}
                       error={!!errors.asset_name}
                       helperText={errors.asset_name}
-                      onChange={(event) => handleChange("asset_name", event.target.value)}
+                      onChange={(event) =>
+                        handleChange("asset_name", event.target.value)
+                      }
                     />
                   </Grid>
 
@@ -249,10 +285,12 @@ export default function CreateAssetPage() {
                       value={form.asset_type}
                       error={!!errors.asset_type}
                       helperText={errors.asset_type}
-                      onChange={(event) => handleChange("asset_type", event.target.value)}
+                      onChange={(event) =>
+                        handleChange("asset_type", event.target.value)
+                      }
                     >
                       {assetTypes.map((type) => (
-                        <MenuItem key={type.id} value={type.asset_type_name}>
+                        <MenuItem key={type.id} value={type.id}>
                           {type.asset_type_name}
                         </MenuItem>
                       ))}
@@ -266,7 +304,9 @@ export default function CreateAssetPage() {
                       rows={4}
                       label="Asset Address"
                       value={form.asset_address}
-                      onChange={(event) => handleChange("asset_address", event.target.value)}
+                      onChange={(event) =>
+                        handleChange("asset_address", event.target.value)
+                      }
                     />
                   </Grid>
                 </Grid>
@@ -274,7 +314,10 @@ export default function CreateAssetPage() {
             )}
 
             {activeStep === 1 && (
-              <EnterpriseSectionCard title="Applicable Taxes" subtitle="Select the tax types that apply to this asset.">
+              <EnterpriseSectionCard
+                title="Applicable Taxes"
+                subtitle="Select the tax types that apply to this asset."
+              >
                 <Grid container spacing={2}>
                   {taxTypes.map((tax) => (
                     <Grid size={{ xs: 12, md: 6 }} key={tax.id}>
@@ -300,17 +343,25 @@ export default function CreateAssetPage() {
             )}
 
             {activeStep === 2 && (
-              <EnterpriseSectionCard title="Assessment Parameters" subtitle="Capture any tax-specific parameter values.">
+              <EnterpriseSectionCard
+                title="Assessment Parameters"
+                subtitle="Capture any tax-specific parameter values."
+              >
                 <Grid container spacing={3}>
                   {parameters.length === 0 ? (
                     <Grid size={12}>
                       <Typography color="text.secondary">
-                        No assessment parameters are available for the selected tax types yet.
+                        No assessment parameters are available for the selected
+                        tax types yet.
                       </Typography>
                     </Grid>
                   ) : (
                     parameters.map((parameter) => {
-                      const options = parameter.possible_values?.split(",").map((value) => value.trim()).filter(Boolean) || [];
+                      const options =
+                        parameter.possible_values
+                          ?.split(",")
+                          .map((value) => value.trim())
+                          .filter(Boolean) || [];
 
                       if (parameter.ui_component === "DROPDOWN") {
                         return (
@@ -320,10 +371,18 @@ export default function CreateAssetPage() {
                               fullWidth
                               label={parameter.parameter_name}
                               value={parameterValues[parameter.id] ?? ""}
-                              onChange={(event) => handleParameterChange(parameter.id, event.target.value)}
+                              onChange={(event) =>
+                                handleParameterChange(
+                                  parameter.id,
+                                  event.target.value,
+                                )
+                              }
                             >
                               {options.map((option, index) => (
-                                <MenuItem key={`${parameter.id}-${index}`} value={option}>
+                                <MenuItem
+                                  key={`${parameter.id}-${index}`}
+                                  value={option}
+                                >
                                   {option}
                                 </MenuItem>
                               ))}
@@ -338,7 +397,12 @@ export default function CreateAssetPage() {
                             fullWidth
                             label={parameter.parameter_name}
                             value={parameterValues[parameter.id] ?? ""}
-                            onChange={(event) => handleParameterChange(parameter.id, event.target.value)}
+                            onChange={(event) =>
+                              handleParameterChange(
+                                parameter.id,
+                                event.target.value,
+                              )
+                            }
                           />
                         </Grid>
                       );
@@ -349,22 +413,45 @@ export default function CreateAssetPage() {
             )}
 
             {activeStep === 3 && (
-              <EnterpriseSectionCard title="Review & Submit" subtitle="Verify the asset registration details before saving.">
+              <EnterpriseSectionCard
+                title="Review & Submit"
+                subtitle="Verify the asset registration details before saving."
+              >
                 <Grid container spacing={2}>
                   <Grid size={12}>
-                    <Typography><strong>Citizen:</strong> {selectedCitizen.full_name || "Not selected"}</Typography>
+                    <Typography>
+                      <strong>Citizen:</strong>{" "}
+                      {selectedCitizen.full_name || "Not selected"}
+                    </Typography>
                   </Grid>
                   <Grid size={12}>
-                    <Typography><strong>Asset Name:</strong> {form.asset_name}</Typography>
+                    <Typography>
+                      <strong>Asset Name:</strong> {form.asset_name}
+                    </Typography>
                   </Grid>
                   <Grid size={12}>
-                    <Typography><strong>Asset Type:</strong> {form.asset_type}</Typography>
+                    <Typography>
+                      <strong>Asset Type:</strong> {form.asset_type}
+                    </Typography>
                   </Grid>
                   <Grid size={12}>
-                    <Typography><strong>Selected Taxes:</strong> {selectedTaxes.length}</Typography>
+                    <Typography>
+                      <strong>Selected Taxes:</strong>
+                    </Typography>
+
+                    <ul>
+                      {taxTypes
+                        .filter((tax) => selectedTaxes.includes(tax.id))
+                        .map((tax) => (
+                          <li key={tax.id}>{tax.tax_name}</li>
+                        ))}
+                    </ul>
                   </Grid>
                   <Grid size={12}>
-                    <Typography><strong>Assessment Parameters:</strong> {Object.keys(parameterValues).length}</Typography>
+                    <Typography>
+                      <strong>Assessment Parameters:</strong>{" "}
+                      {Object.keys(parameterValues).length}
+                    </Typography>
                   </Grid>
                 </Grid>
               </EnterpriseSectionCard>
@@ -393,11 +480,20 @@ export default function CreateAssetPage() {
               </Button>
 
               {activeStep !== 3 ? (
-                <Button variant="contained" endIcon={<ArrowForwardIcon />} onClick={handleNext}>
+                <Button
+                  variant="contained"
+                  endIcon={<ArrowForwardIcon />}
+                  onClick={handleNext}
+                >
                   Continue
                 </Button>
               ) : (
-                <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} disabled={saving}>
+                <Button
+                  variant="contained"
+                  startIcon={<SaveIcon />}
+                  onClick={handleSave}
+                  disabled={saving}
+                >
                   {saving ? "Registering..." : "Register Asset"}
                 </Button>
               )}
@@ -411,7 +507,10 @@ export default function CreateAssetPage() {
               status="ACTIVE"
               verification="PENDING"
               fullName={form.asset_name}
-              city={form.asset_type}
+              city={
+                assetTypes.find((item) => item.id === Number(form.asset_type))
+                  ?.asset_type_name || ""
+              }
               mobile={selectedCitizen.full_name || ""}
             />
           </div>
@@ -422,7 +521,8 @@ export default function CreateAssetPage() {
         <DialogTitle>Unsaved Changes</DialogTitle>
         <DialogContent>
           <Typography>
-            You have unsaved changes on this page. If you leave now, all entered information will be lost.
+            You have unsaved changes on this page. If you leave now, all entered
+            information will be lost.
           </Typography>
         </DialogContent>
         <DialogActions>
