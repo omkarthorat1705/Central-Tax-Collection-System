@@ -210,6 +210,15 @@ export default function CreateAssetPage() {
       (citizen) => String(citizen.id) === String(form.citizen_id),
     ) || {};
 
+  const groupedParameters = selectedTaxes
+    .map((taxId) => ({
+      tax: taxTypes.find((t) => Number(t.id) === Number(taxId)),
+      parameters: parameters.filter(
+        (p) => Number(p.tax_type_id) === Number(taxId),
+      ),
+    }))
+    .filter((group) => group.tax && group.parameters.length > 0);
+
   return (
     <AdminLayout sidebar={<AdminSidebar />} pageTitle="Asset Registration">
       <div className="citizen-page">
@@ -350,57 +359,89 @@ export default function CreateAssetPage() {
                       </Typography>
                     </Grid>
                   ) : (
-                    parameters.map((parameter) => {
-                      const options =
-                        parameter.possible_values
-                          ?.split(",")
-                          .map((value) => value.trim())
-                          .filter(Boolean) || [];
+                    groupedParameters.map((group) => (
+                      <Grid size={12} key={group.tax.id}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            color: "#4dabf7",
+                            mb: 2,
+                            fontWeight: 700,
+                          }}
+                        >
+                          {group.tax.tax_name}
+                        </Typography>
 
-                      if (parameter.ui_component === "DROPDOWN") {
-                        return (
-                          <Grid size={{ xs: 12, md: 6 }} key={parameter.id}>
-                            <TextField
-                              select
-                              fullWidth
-                              label={parameter.parameter_name}
-                              value={parameterValues[parameter.id] ?? ""}
-                              onChange={(event) =>
-                                handleParameterChange(
-                                  parameter.id,
-                                  event.target.value,
-                                )
-                              }
-                            >
-                              {options.map((option, index) => (
-                                <MenuItem
-                                  key={`${parameter.id}-${index}`}
-                                  value={option}
-                                >
-                                  {option}
-                                </MenuItem>
-                              ))}
-                            </TextField>
-                          </Grid>
-                        );
-                      }
+                        <Grid container spacing={3}>
+                          {group.parameters.map((parameter) => {
+                            const options =
+                              parameter.possible_values
+                                ?.split(",")
+                                .map((x) => x.trim())
+                                .filter(Boolean) || [];
 
-                      return (
-                        <Grid size={{ xs: 12, md: 6 }} key={parameter.id}>
-                          <TextField
-                            fullWidth
-                            label={parameter.parameter_name}
-                            value={parameterValues[parameter.id] ?? ""}
-                            onChange={(event) =>
-                              handleParameterChange(
-                                parameter.id,
-                                event.target.value,
-                              )
-                            }
-                          />
+                            return (
+                              <Grid size={{ xs: 12, md: 6 }} key={parameter.id}>
+                                {parameter.ui_component === "CHECKBOX" ? (
+                                  <FormControlLabel
+                                    control={
+                                      <Checkbox
+                                        checked={
+                                          parameterValues[parameter.id] === true
+                                        }
+                                        onChange={(e) =>
+                                          handleParameterChange(
+                                            parameter.id,
+                                            e.target.checked,
+                                          )
+                                        }
+                                      />
+                                    }
+                                    label={parameter.parameter_name}
+                                  />
+                                ) : parameter.ui_component === "DROPDOWN" ? (
+                                  <TextField
+                                    select
+                                    fullWidth
+                                    label={parameter.parameter_name}
+                                    value={parameterValues[parameter.id] ?? ""}
+                                    onChange={(e) =>
+                                      handleParameterChange(
+                                        parameter.id,
+                                        e.target.value,
+                                      )
+                                    }
+                                  >
+                                    {options.map((option) => (
+                                      <MenuItem key={option} value={option}>
+                                        {option}
+                                      </MenuItem>
+                                    ))}
+                                  </TextField>
+                                ) : (
+                                  <TextField
+                                    fullWidth
+                                    type={
+                                      parameter.parameter_type === "number"
+                                        ? "number"
+                                        : "text"
+                                    }
+                                    label={parameter.parameter_name}
+                                    value={parameterValues[parameter.id] ?? ""}
+                                    onChange={(e) =>
+                                      handleParameterChange(
+                                        parameter.id,
+                                        e.target.value,
+                                      )
+                                    }
+                                  />
+                                )}
+                              </Grid>
+                            );
+                          })}
                         </Grid>
-                      );
-                    })
+                      </Grid>
+                    ))
                   )}
                 </Grid>
               </EnterpriseSectionCard>
