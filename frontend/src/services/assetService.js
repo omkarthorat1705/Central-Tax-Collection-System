@@ -1,7 +1,6 @@
 import API from "../api/api";
 
-const extractData = (response) =>
-  response?.data?.data ?? response?.data ?? [];
+const extractData = (response) => response?.data?.data ?? response?.data ?? [];
 
 export const getAssets = async () => {
   const response = await API.get("/assets/getAssets");
@@ -39,10 +38,7 @@ export const getTaxTypes = async () => {
 };
 
 export const getAssetParameters = async (payload) => {
-  const response = await API.post(
-    "/getAssetParameters",
-    payload,
-  );
+  const response = await API.post("/getAssetParameters", payload);
 
   return extractData(response);
 };

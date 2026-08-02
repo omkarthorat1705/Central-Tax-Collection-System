@@ -55,13 +55,13 @@ const getParameters = asyncHandler(async (req, res) => {
 const getAssetParameters = asyncHandler(async (req, res) => {
   const { tax_type_ids } = req.body;
 
-  if (!tax_type_ids || !tax_type_ids.length) {
+  if (!Array.isArray(tax_type_ids) || tax_type_ids.length === 0) {
     return successResponse(res, []);
   }
 
   const placeholders = tax_type_ids.map(() => "?").join(",");
 
-  const query = `
+  const sql = `
     SELECT
       id,
       tax_type_id,
@@ -70,23 +70,24 @@ const getAssetParameters = asyncHandler(async (req, res) => {
       parameter_type,
       ui_component,
       possible_values,
+      validation_rules,
       required_flag,
-      display_order
+      display_order,
+      asset_type
     FROM parameters
-    WHERE tenant_id = ?
-    AND is_deleted = 0
-    AND COALESCE(status, 'ACTIVE') = 'ACTIVE'
-    AND tax_type_id IN (${placeholders})
-    ORDER BY display_order ASC
+    WHERE is_deleted = 0
+      AND tax_type_id IN (${placeholders})
+    ORDER BY display_order ASC,
+             id ASC
   `;
 
-  db.all(query, [req.tenant.tenant_id, ...tax_type_ids], (err, rows) => {
+  db.all(sql, tax_type_ids, (err, rows) => {
     if (err) {
       console.error(err);
       return errorResponse(res, "Failed to fetch parameters");
     }
 
-    return successResponse(res, rows);
+    return successResponse(res, rows || []);
   });
 });
 
@@ -150,7 +151,6 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ui_component || null,
       validation_rules || null,
       possible_values || null,
-      required_flag ? 1 : 0,
       required_flag ? 1 : 0,
       display_order || 1,
       asset_type || null,

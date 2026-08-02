@@ -61,44 +61,37 @@ export default function CreateAssetPage() {
     asset_address: "",
   });
 
-const loadInitialData = async () => {
-  try {
-    const [citizenData, assetTypeData, taxData] =
-      await Promise.all([
+  const loadInitialData = async () => {
+    try {
+      const [citizenData, assetTypeData, taxData] = await Promise.all([
         getCitizens(),
         assetService.getAssetTypes(),
         assetService.getTaxTypes(),
       ]);
 
-    setCitizens(
-      Array.isArray(citizenData)
-        ? citizenData
-        : citizenData?.data || [],
-    );
+      setCitizens(
+        Array.isArray(citizenData) ? citizenData : citizenData?.data || [],
+      );
 
-    setAssetTypes(
-      Array.isArray(assetTypeData)
-        ? assetTypeData
-        : assetTypeData?.data || [],
-    );
+      setAssetTypes(
+        Array.isArray(assetTypeData)
+          ? assetTypeData
+          : assetTypeData?.data || [],
+      );
 
-    setTaxTypes(
-      Array.isArray(taxData)
-        ? taxData
-        : taxData?.data || [],
-    );
-  } catch (error) {
-    console.error(error);
+      setTaxTypes(Array.isArray(taxData) ? taxData : taxData?.data || []);
+    } catch (error) {
+      console.error(error);
 
-    setCitizens([]);
-    setAssetTypes([]);
-    setTaxTypes([]);
-  }
-};
+      setCitizens([]);
+      setAssetTypes([]);
+      setTaxTypes([]);
+    }
+  };
 
-useEffect(() => {
-  loadInitialData();
-}, []);
+  useEffect(() => {
+    loadInitialData();
+  }, []);
 
   const handleChange = (field, value) => {
     setIsDirty(true);
@@ -115,10 +108,8 @@ useEffect(() => {
     setSelectedTaxes(updatedTaxes);
 
     try {
-      const parameterData = await assetService.getAssetParameters({
-        tax_type_ids: updatedTaxes,
-      });
-      setParameters(parameterData || []);
+      const parameterData = await assetService.getAssetParameters(updatedTaxes);
+      setParameters(Array.isArray(parameterData) ? parameterData : []);
     } catch (error) {
       console.error(error);
       setErrors((prev) => ({
