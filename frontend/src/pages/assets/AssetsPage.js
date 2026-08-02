@@ -30,7 +30,7 @@ export default function AssetsPage() {
 
   const loadAssets = async () => {
     try {
-      const response = await API.get("/getAssets");
+      const response = await API.get("/assets/getAssets");
 
       setAssets(response.data.data || []);
     } catch (error) {
