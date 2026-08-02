@@ -34,13 +34,19 @@ const formatCurrency = (amount) => {
 };
 
 const AdminDashboard = () => {
-  const { dashboardSummary, loading, refreshDashboard, refreshAll } = useAppData();
+  const {
+    citizens = [],
+    assetTypes = [],
+    taxTypes = [],
+    loading,
+  } = useAppData();
 
-  // const user = getCurrentUser();
-
-  useEffect(() => {
-    refreshAll();
-  }, [refreshAll]);
+  const dashboardSummary = {
+    total_assessment: assetTypes.length,
+    total_collection: 0,
+    total_pending: 0,
+    partial_cases: citizens.length,
+  };
 
   const cards = [
     {
@@ -49,24 +55,21 @@ const AdminDashboard = () => {
       icon: <Assessment sx={{ fontSize: 42 }} />,
       color: "#38bdf8",
     },
-
     {
       title: "Revenue Collected",
       value: formatCurrency(dashboardSummary.total_collection),
       icon: <Payments sx={{ fontSize: 42 }} />,
       color: "#22c55e",
     },
-
     {
       title: "Pending Revenue",
       value: formatCurrency(dashboardSummary.total_pending),
       icon: <AccountBalance sx={{ fontSize: 42 }} />,
       color: "#f59e0b",
     },
-
     {
-      title: "Partial Cases",
-      value: dashboardSummary.partial_cases,
+      title: "Registered Citizens",
+      value: citizens.length,
       icon: <People sx={{ fontSize: 42 }} />,
       color: "#a855f7",
     },
@@ -331,7 +334,8 @@ const AdminDashboard = () => {
                 </Typography>
 
                 <Typography sx={{ mt: 2 }}>
-                  • Live data refreshed across dashboard, tax, and citizen modules
+                  • Live data refreshed across dashboard, tax, and citizen
+                  modules
                 </Typography>
               </Box>
             </CardContent>
