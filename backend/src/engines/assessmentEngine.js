@@ -1,4 +1,4 @@
-const db = require("../config/database");
+const db = require("../config/db");
 
 // =========================================
 // GENERATE ASSESSMENT
@@ -56,7 +56,11 @@ const generateAssessment = async (asset_id, financial_year) => {
                   completed++;
 
                   if (completed === taxes.length) {
-                    resolve(true);
+                    resolve({
+                      asset_id,
+                      financial_year,
+                      success: true,
+                    });
                   }
                 },
                 reject,

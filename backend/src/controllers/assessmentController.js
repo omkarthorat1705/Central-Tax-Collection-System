@@ -8,7 +8,7 @@ const generateAssessment = asyncHandler(async (req, res) => {
 
   const result = await assessmentService.generateAssessment(req.body, tenantId);
 
-  return successResponse(res, result);
+  return successResponse(res, result, "Assessment generated successfully.");
 });
 
 const listAssessments = asyncHandler(async (req, res) => {
