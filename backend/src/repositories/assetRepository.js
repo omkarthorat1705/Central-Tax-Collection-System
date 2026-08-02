@@ -347,7 +347,7 @@ const deleteAsset = (assetId, tenantId) => {
 // ASSET TYPES
 // =====================================
 
-const getAssetTypes = (tenantId) => {
+const getAssetTypes = () => {
   return new Promise((resolve, reject) => {
     db.all(
       `
@@ -356,11 +356,10 @@ const getAssetTypes = (tenantId) => {
         asset_type_code,
         asset_type_name
       FROM asset_types
-      WHERE tenant_id = ?
-      AND is_deleted = 0
+      WHERE is_deleted = 0
       ORDER BY asset_type_name
       `,
-      [tenantId],
+      [],
       (err, rows) => {
         if (err) reject(err);
         else resolve(rows);

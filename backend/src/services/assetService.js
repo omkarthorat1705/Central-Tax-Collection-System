@@ -107,12 +107,8 @@ const deleteAsset = async (
   };
 };
 
-const getAssetTypes = async (
-  tenantId,
-) => {
-  return assetRepository.getAssetTypes(
-    tenantId,
-  );
+const getAssetTypes = async () => {
+  return assetRepository.getAssetTypes();
 };
 
 module.exports = {

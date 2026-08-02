@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 import assetService from "../services/assetService";
 import { getCitizens } from "../services/citizenService";
@@ -6,53 +12,72 @@ import { getCitizens } from "../services/citizenService";
 const AppDataContext = createContext(null);
 
 export function AppDataProvider({ children }) {
-  const initialized = useRef(false);
-
   const [citizens, setCitizens] = useState([]);
   const [assetTypes, setAssetTypes] = useState([]);
   const [taxTypes, setTaxTypes] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const refreshCitizens = useCallback(async () => {
+    try {
+      const response = await getCitizens();
+
+      setCitizens(
+        Array.isArray(response)
+          ? response
+          : response?.data || [],
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
+  const refreshAssetTypes = useCallback(async () => {
+    try {
+      const response = await assetService.getAssetTypes();
+
+      setAssetTypes(
+        Array.isArray(response)
+          ? response
+          : response?.data || [],
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
+  const refreshTaxTypes = useCallback(async () => {
+    try {
+      const response = await assetService.getTaxTypes();
+
+      setTaxTypes(
+        Array.isArray(response)
+          ? response
+          : response?.data || [],
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
   useEffect(() => {
-    if (initialized.current) return;
-
-    initialized.current = true;
-
     const load = async () => {
-      try {
-        const [citizenRes, assetTypeRes, taxTypeRes] =
-          await Promise.all([
-            getCitizens(),
-            assetService.getAssetTypes(),
-            assetService.getTaxTypes(),
-          ]);
+      setLoading(true);
 
-        setCitizens(
-          Array.isArray(citizenRes)
-            ? citizenRes
-            : citizenRes?.data || [],
-        );
+      await Promise.all([
+        refreshCitizens(),
+        refreshAssetTypes(),
+        refreshTaxTypes(),
+      ]);
 
-        setAssetTypes(
-          Array.isArray(assetTypeRes)
-            ? assetTypeRes
-            : assetTypeRes?.data || [],
-        );
-
-        setTaxTypes(
-          Array.isArray(taxTypeRes)
-            ? taxTypeRes
-            : taxTypeRes?.data || [],
-        );
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
+      setLoading(false);
     };
 
     load();
-  }, []);
+  }, [
+    refreshCitizens,
+    refreshAssetTypes,
+    refreshTaxTypes,
+  ]);
 
   return (
     <AppDataContext.Provider
@@ -61,6 +86,9 @@ export function AppDataProvider({ children }) {
         assetTypes,
         taxTypes,
         loading,
+        refreshCitizens,
+        refreshAssetTypes,
+        refreshTaxTypes,
       }}
     >
       {children}
