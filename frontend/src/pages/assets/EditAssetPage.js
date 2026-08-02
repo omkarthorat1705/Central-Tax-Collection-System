@@ -47,24 +47,33 @@ export default function EditAssetPage() {
           assetService.getAssetById(id),
         ]);
 
-        setCitizens(citizenData || []);
-        setAssetTypes(assetTypeData || []);
+        setCitizens(
+          Array.isArray(citizenData) ? citizenData : citizenData?.data || [],
+        );
 
-        if (assetResponse?.asset) {
-          const asset = assetResponse.asset;
-          setForm({
-            citizen_id: asset.citizen_id || "",
-            asset_name: asset.asset_name || "",
-            asset_type: asset.asset_type || "",
-            asset_address: asset.asset_address || "",
-          });
-        } else {
+        setAssetTypes(
+          Array.isArray(assetTypeData)
+            ? assetTypeData
+            : assetTypeData?.data || [],
+        );
+
+        const asset = assetResponse?.asset || assetResponse?.data?.asset;
+
+        if (!asset) {
           alert("Asset not found");
           navigate("/assets");
+          return;
         }
+
+        setForm({
+          citizen_id: asset.citizen_id || "",
+          asset_name: asset.asset_name || "",
+          asset_type: asset.asset_type_id || asset.asset_type || "",
+          asset_address: asset.asset_address || "",
+        });
       } catch (error) {
         console.error(error);
-        alert("Failed to load asset details");
+        alert("Failed to load asset");
         navigate("/assets");
       } finally {
         setLoading(false);
@@ -98,25 +107,40 @@ export default function EditAssetPage() {
   };
 
   const handleSave = async () => {
-    if (!validate()) return;
+  if (!validate()) return;
 
-    try {
-      setSaving(true);
-      await assetService.updateAsset(id, form);
-      alert("Asset updated successfully");
-      navigate(`/assets/view/${id}`);
-    } catch (error) {
-      console.error(error);
-      alert("Failed to update asset");
-    } finally {
-      setSaving(false);
-    }
-  };
+  try {
+    setSaving(true);
+
+    await assetService.updateAsset(id, {
+      citizen_id: Number(form.citizen_id),
+      asset_name: form.asset_name.trim(),
+      asset_type_id: Number(form.asset_type),
+      asset_address: form.asset_address.trim(),
+    });
+
+    alert("Asset updated successfully");
+
+    navigate(`/assets/view/${id}`);
+  } catch (error) {
+    console.error(error);
+    alert("Failed to update asset");
+  } finally {
+    setSaving(false);
+  }
+};
 
   if (loading) {
     return (
       <AdminLayout sidebar={<AdminSidebar />} pageTitle="Edit Asset">
-        <Box sx={{ minHeight: "60vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
+        <Box
+          sx={{
+            minHeight: "60vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
           <CircularProgress />
         </Box>
       </AdminLayout>
@@ -126,16 +150,28 @@ export default function EditAssetPage() {
   return (
     <AdminLayout sidebar={<AdminSidebar />} pageTitle="Edit Asset">
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 3 }}>
-        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate(`/assets/view/${id}`)}>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate(`/assets/view/${id}`)}
+        >
           Cancel
         </Button>
 
-        <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} disabled={saving}>
+        <Button
+          variant="contained"
+          startIcon={<SaveIcon />}
+          onClick={handleSave}
+          disabled={saving}
+        >
           {saving ? "Saving..." : "Save Changes"}
         </Button>
       </Box>
 
-      <EnterpriseSectionCard title="Edit Asset" subtitle="Update the asset details and ownership information.">
+      <EnterpriseSectionCard
+        title="Edit Asset"
+        subtitle="Update the asset details and ownership information."
+      >
         <Grid container spacing={3}>
           <Grid size={12}>
             <TextField
@@ -145,7 +181,9 @@ export default function EditAssetPage() {
               value={form.citizen_id}
               error={!!errors.citizen_id}
               helperText={errors.citizen_id}
-              onChange={(event) => handleChange("citizen_id", event.target.value)}
+              onChange={(event) =>
+                handleChange("citizen_id", Number(event.target.value))
+              }
             >
               {citizens.map((citizen) => (
                 <MenuItem key={citizen.id} value={citizen.id}>
@@ -162,7 +200,9 @@ export default function EditAssetPage() {
               value={form.asset_name}
               error={!!errors.asset_name}
               helperText={errors.asset_name}
-              onChange={(event) => handleChange("asset_name", event.target.value)}
+              onChange={(event) =>
+                handleChange("asset_name", event.target.value)
+              }
             />
           </Grid>
 
@@ -174,10 +214,12 @@ export default function EditAssetPage() {
               value={form.asset_type}
               error={!!errors.asset_type}
               helperText={errors.asset_type}
-              onChange={(event) => handleChange("asset_type", event.target.value)}
+              onChange={(event) =>
+                handleChange("asset_type", Number(event.target.value))
+              }
             >
               {assetTypes.map((type) => (
-                <MenuItem key={type.id} value={type.asset_type_name}>
+                <MenuItem key={type.id} value={type.id}>
                   {type.asset_type_name}
                 </MenuItem>
               ))}
@@ -191,7 +233,9 @@ export default function EditAssetPage() {
               rows={4}
               label="Asset Address"
               value={form.asset_address}
-              onChange={(event) => handleChange("asset_address", event.target.value)}
+              onChange={(event) =>
+                handleChange("asset_address", event.target.value)
+              }
             />
           </Grid>
         </Grid>

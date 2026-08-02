@@ -61,43 +61,44 @@ export default function CreateAssetPage() {
     asset_address: "",
   });
 
-  useEffect(() => {
-    let isMounted = true;
+const loadInitialData = async () => {
+  try {
+    const [citizenData, assetTypeData, taxData] =
+      await Promise.all([
+        getCitizens(),
+        assetService.getAssetTypes(),
+        assetService.getTaxTypes(),
+      ]);
 
-    const loadInitialData = async () => {
-      try {
-        const citizenData = await getCitizens();
+    setCitizens(
+      Array.isArray(citizenData)
+        ? citizenData
+        : citizenData?.data || [],
+    );
 
-        const assetTypeData = await assetService.getAssetTypes();
+    setAssetTypes(
+      Array.isArray(assetTypeData)
+        ? assetTypeData
+        : assetTypeData?.data || [],
+    );
 
-        const taxData = await assetService.getTaxTypes();
+    setTaxTypes(
+      Array.isArray(taxData)
+        ? taxData
+        : taxData?.data || [],
+    );
+  } catch (error) {
+    console.error(error);
 
-        setCitizens(
-          Array.isArray(citizenData) ? citizenData : citizenData?.data || [],
-        );
+    setCitizens([]);
+    setAssetTypes([]);
+    setTaxTypes([]);
+  }
+};
 
-        setAssetTypes(
-          Array.isArray(assetTypeData)
-            ? assetTypeData
-            : assetTypeData?.data || [],
-        );
-
-        setTaxTypes(Array.isArray(taxData) ? taxData : taxData?.data || []);
-      } catch (error) {
-        console.error(error);
-
-        setCitizens([]);
-        setAssetTypes([]);
-        setTaxTypes([]);
-      }
-    };
-
-    loadInitialData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+useEffect(() => {
+  loadInitialData();
+}, []);
 
   const handleChange = (field, value) => {
     setIsDirty(true);

@@ -1,72 +1,71 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import API from "../api/api";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
-const AppDataContext = createContext();
+import assetService from "../services/assetService";
+import { getCitizens } from "../services/citizenService";
 
-export const AppDataProvider = ({ children }) => {
-  const [dashboardSummary, setDashboardSummary] = useState({
-    total_assessment: 0,
-    total_collection: 0,
-    total_pending: 0,
-    partial_cases: 0,
-  });
-  const [taxTypes, setTaxTypes] = useState([]);
+const AppDataContext = createContext(null);
+
+export function AppDataProvider({ children }) {
+  const initialized = useRef(false);
+
   const [citizens, setCitizens] = useState([]);
+  const [assetTypes, setAssetTypes] = useState([]);
+  const [taxTypes, setTaxTypes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const refreshDashboard = useCallback(async () => {
-    try {
-      const response = await API.get("/getRevenueSummary");
-      setDashboardSummary(response.data.data || {});
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
-  const refreshTaxTypes = useCallback(async () => {
-    try {
-      const response = await API.get("/getTaxTypes");
-      setTaxTypes(response.data.data || []);
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
-  const refreshCitizens = useCallback(async () => {
-    try {
-      const response = await API.get("/getCitizens");
-      setCitizens(response.data.data || []);
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
-  const refreshAll = useCallback(async () => {
-    setLoading(true);
-    await Promise.all([refreshDashboard(), refreshTaxTypes(), refreshCitizens()]);
-    setLoading(false);
-  }, [refreshDashboard, refreshTaxTypes, refreshCitizens]);
-
   useEffect(() => {
-    refreshAll();
-  }, [refreshAll]);
+    if (initialized.current) return;
+
+    initialized.current = true;
+
+    const load = async () => {
+      try {
+        const [citizenRes, assetTypeRes, taxTypeRes] =
+          await Promise.all([
+            getCitizens(),
+            assetService.getAssetTypes(),
+            assetService.getTaxTypes(),
+          ]);
+
+        setCitizens(
+          Array.isArray(citizenRes)
+            ? citizenRes
+            : citizenRes?.data || [],
+        );
+
+        setAssetTypes(
+          Array.isArray(assetTypeRes)
+            ? assetTypeRes
+            : assetTypeRes?.data || [],
+        );
+
+        setTaxTypes(
+          Array.isArray(taxTypeRes)
+            ? taxTypeRes
+            : taxTypeRes?.data || [],
+        );
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, []);
 
   return (
     <AppDataContext.Provider
       value={{
-        dashboardSummary,
-        refreshDashboard,
-        taxTypes,
-        refreshTaxTypes,
         citizens,
-        refreshCitizens,
-        refreshAll,
+        assetTypes,
+        taxTypes,
         loading,
       }}
     >
       {children}
     </AppDataContext.Provider>
   );
-};
+}
 
 export const useAppData = () => useContext(AppDataContext);
