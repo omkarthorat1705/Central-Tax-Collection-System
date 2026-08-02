@@ -25,7 +25,7 @@ const getAssetTaxes = (assetId, tenantId) => {
       `
       SELECT *
       FROM asset_tax_mapping
-      WHERE asset_id = ?
+      WHERE citizen_asset_id = ?
       AND tenant_id = ?
       AND is_deleted = 0
       `,
@@ -94,7 +94,7 @@ const getPreviousOutstanding = (assetId, tenantId) => {
 
       FROM tax_assessments
 
-      WHERE asset_id = ?
+      WHERE citizen_asset_id = ?
       AND tenant_id = ?
       AND assessment_status != 'PAID'
       AND is_deleted = 0
@@ -195,7 +195,7 @@ const getAssessments = (tenantId) => {
         c.full_name AS citizen_name,
         tt.tax_name
       FROM tax_assessments ta
-      LEFT JOIN assets a ON a.id = ta.asset_id AND a.tenant_id = ta.tenant_id
+      LEFT JOIN citizen_assets a ON a.id = ta.asset_id AND a.tenant_id = ta.tenant_id
       LEFT JOIN citizens c ON c.id = ta.citizen_id AND c.tenant_id = ta.tenant_id
       LEFT JOIN tax_types tt ON tt.id = ta.tax_type_id AND tt.tenant_id = ta.tenant_id
       WHERE ta.tenant_id = ?

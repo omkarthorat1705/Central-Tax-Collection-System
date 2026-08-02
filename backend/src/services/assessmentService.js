@@ -21,17 +21,19 @@ const generateAssessment = async (payload, tenantId) => {
 
   await assessmentEngine.generateAssessment(Number(asset_id), financial_year);
 
-  await createAuditLog({
-    tenant_id: tenantId,
-    module_name: "ASSESSMENT",
-    entity_name: "tax_assessments",
-    entity_id: asset_id,
-    action_type: "GENERATE",
-    action_by: generated_by || 1,
-    old_value: null,
-    new_value: JSON.stringify(payload),
-    remarks: "Assessment generated using assessment engine",
-  });
+  try {
+    await createAuditLog({
+      tenant_id: 1,
+      action: "CREATE",
+      table_name: "tax_assessments",
+      record_id: assessment.id,
+      module_name: "Assessment",
+      new_values: assessment,
+      created_by: 1,
+    });
+  } catch (err) {
+    console.error("Audit log failed:", err.message);
+  }
 
   return getAssessments(tenantId);
 };

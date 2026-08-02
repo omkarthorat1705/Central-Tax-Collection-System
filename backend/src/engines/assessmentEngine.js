@@ -31,7 +31,7 @@ const generateAssessment = async (asset_id, financial_year) => {
           `
           SELECT *
           FROM asset_tax_mapping
-          WHERE asset_id = ?
+          WHERE citizen_asset_id = ?
           AND is_deleted = 0
           `,
           [asset_id],
@@ -127,8 +127,21 @@ const processTaxAssessment = (asset, tax, financial_year, callback, reject) => {
         [tax.tax_type_id],
 
         (err, rule) => {
-          if (err || !rule) {
-            return reject("Tax rule not found");
+          if (err) {
+            return reject(err.message);
+          }
+
+          if (!rule) {
+            return createAssessment(
+              asset,
+              tax,
+              financial_year,
+              0,
+              0,
+              0,
+              callback,
+              reject,
+            );
           }
 
           // =====================================
@@ -154,7 +167,7 @@ const processTaxAssessment = (asset, tax, financial_year, callback, reject) => {
 
             FROM tax_assessments
 
-            WHERE asset_id = ?
+            WHERE citizen_asset_id = ?
             `,
             [asset.id],
 
