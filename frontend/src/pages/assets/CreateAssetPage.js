@@ -108,7 +108,9 @@ export default function CreateAssetPage() {
     setSelectedTaxes(updatedTaxes);
 
     try {
-      const parameterData = await assetService.getAssetParameters(updatedTaxes);
+      const parameterData = await assetService.getAssetParameters(
+        updatedTaxes.map(Number),
+      );
       setParameters(Array.isArray(parameterData) ? parameterData : []);
     } catch (error) {
       console.error(error);

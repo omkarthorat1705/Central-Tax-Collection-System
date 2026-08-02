@@ -37,9 +37,10 @@ export const getTaxTypes = async () => {
   return extractData(response);
 };
 
-export const getAssetParameters = async (payload) => {
-  const response = await API.post("/getAssetParameters", payload);
-
+export const getAssetParameters = async (taxTypeIds) => {
+  const response = await API.post("/getAssetParameters", {
+    tax_type_ids: Array.isArray(taxTypeIds) ? taxTypeIds.map(Number) : [],
+  });
   return extractData(response);
 };
 
