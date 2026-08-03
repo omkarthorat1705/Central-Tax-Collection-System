@@ -30,7 +30,6 @@ const getRevenueSummary = (tenantId) => {
           SELECT IFNULL(SUM(payment_amount), 0)
           FROM tax_payments
           WHERE tenant_id = ?
-          AND is_deleted = 0
         ) AS total_collection,
 
         (
@@ -72,7 +71,6 @@ const getWardWiseCollection = (tenantId) => {
       LEFT JOIN tax_assessments ta ON ta.id = tp.assessment_id AND ta.tenant_id = tp.tenant_id
       LEFT JOIN citizens c ON c.id = ta.citizen_id AND c.tenant_id = tp.tenant_id
       WHERE tp.tenant_id = ?
-      AND tp.is_deleted = 0
       GROUP BY COALESCE(c.ward_number, 'UNASSIGNED')
       ORDER BY total_collection DESC
       `,
@@ -96,7 +94,6 @@ const getTaxWiseCollection = (tenantId) => {
       LEFT JOIN tax_assessments ta ON ta.id = tp.assessment_id AND ta.tenant_id = tp.tenant_id
       LEFT JOIN tax_types tt ON tt.id = ta.tax_type_id AND tt.tenant_id = tp.tenant_id
       WHERE tp.tenant_id = ?
-      AND tp.is_deleted = 0
       GROUP BY ta.tax_type_id, tt.tax_name
       ORDER BY total_collection DESC
       `,
