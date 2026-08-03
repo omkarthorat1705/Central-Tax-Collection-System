@@ -64,7 +64,6 @@ const generateAssessment = async (asset_id, financial_year) => {
                       asset_id,
                       financial_year,
                       assessments: generatedAssessments,
-                      assessment_number,
                       assessment_id: this.lastID,
                     });
                   }
