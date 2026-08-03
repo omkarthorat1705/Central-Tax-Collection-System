@@ -28,14 +28,23 @@ const makePayment = async (payload, tenantId) => {
       tenantId,
     );
 
-    const remainingAmount = Number(assessment.total_amount) - Number(totalPaid);
+    const remainingAmount = Math.max(
+      0,
+      Number(assessment.total_amount) - Number(totalPaid),
+    );
+
+    if (remainingAmount <= 0) {
+      throw new Error("Assessment is already fully paid.");
+    }
 
     // =====================================
     // VALIDATE PAYMENT
     // =====================================
 
     if (Number(payment_amount) > remainingAmount) {
-      throw new Error("Payment exceeds pending balance");
+      throw new Error(
+        `Payment exceeds pending balance. Remaining balance: ₹${remainingAmount.toFixed(2)}`,
+      );
     }
 
     // =====================================
