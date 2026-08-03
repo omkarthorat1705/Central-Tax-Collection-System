@@ -25,15 +25,12 @@ const generateAssessment = async (payload, tenantId) => {
   );
 
   try {
-    // await createAuditLog({
-    //   tenant_id: 1,
-    //   action: "CREATE",
-    //   table_name: "tax_assessments",
-    //   record_id: assessment?.id || null,
-    //   module_name: "Assessment",
-    //   new_values: assessment,
-    //   created_by: 1,
-    // });
+    await createAuditLog({
+      tenant_id: 1,
+      table_name: "tax_assessments",
+      new_values: assessment,
+      created_by: 1,
+    });
   } catch (err) {
     console.error("Audit log failed:", err.message);
   }

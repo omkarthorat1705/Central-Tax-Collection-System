@@ -78,7 +78,6 @@ const makePayment = async (payload, tenantId) => {
 
     await createAuditLog({
       tenant_id: tenantId,
-      module_name: "PAYMENT",
       entity_name: "tax_payments",
       entity_id: paymentId,
       action_type: "CREATE",
