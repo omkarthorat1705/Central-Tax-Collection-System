@@ -74,6 +74,10 @@ const PaymentsPage = () => {
       );
       await loadPayments();
       await loadAssessments();
+      setSelectedAssessment("");
+      setSelectedAssessmentData(null);
+
+      setPaymentAmount("");
       alert("Payment collected successfully");
     } catch (error) {
       console.error(error);
@@ -110,6 +114,23 @@ const PaymentsPage = () => {
                   const assessment = assessments.find(
                     (a) => Number(a.id) === Number(event.target.value),
                   );
+
+                  if (!assessment) return;
+
+                  const total = Number(assessment.total_amount || 0);
+                  const paid = Number(assessment.paid_amount || 0);
+
+                  const balance = Math.max(0, total - paid);
+
+                  setSelectedAssessment(event.target.value);
+                  setSelectedAssessmentData({
+                    ...assessment,
+                    balance_amount: balance,
+                  });
+
+                  setPaymentAmount(balance > 0 ? balance : "");
+
+                  setHelperText(`Outstanding Balance : ₹${balance.toFixed(2)}`);
 
                   setSelectedAssessment(event.target.value);
                   setSelectedAssessmentData(assessment || null);

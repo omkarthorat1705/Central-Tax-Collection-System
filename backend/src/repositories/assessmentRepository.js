@@ -179,28 +179,15 @@ const getAssessments = (tenantId) => {
     db.all(
       `
       SELECT
-        ta.id,
-        ta.assessment_number,
-        ta.financial_year,
-        ta.calculated_amount,
-        ta.arrears_amount,
-        ta.penalty_amount,
-        ta.total_amount,
-        ta.assessment_status,
-        ta.assessment_date,
-        ta.due_date,
-        ta.outstanding_amount,
-        a.asset_code,
-        a.asset_name,
-        c.full_name AS citizen_name,
-        tt.tax_name
-      FROM tax_assessments ta
-      LEFT JOIN citizen_assets a ON a.id = ta.asset_id AND a.tenant_id = ta.tenant_id
-      LEFT JOIN citizens c ON c.id = ta.citizen_id AND c.tenant_id = ta.tenant_id
-      LEFT JOIN tax_types tt ON tt.id = ta.tax_type_id AND tt.tenant_id = ta.tenant_id
-      WHERE ta.tenant_id = ?
-      AND ta.is_deleted = 0
-      ORDER BY ta.created_at DESC
+    ta.*,
+    IFNULL(SUM(tp.payment_amount),0) AS paid_amount
+FROM tax_assessments ta
+LEFT JOIN tax_payments tp
+       ON tp.assessment_id = ta.id
+      AND tp.tenant_id = ta.tenant_id
+WHERE ta.tenant_id = ?
+GROUP BY ta.id
+ORDER BY ta.created_at DESC;
       `,
       [tenantId],
       (err, rows) => {

@@ -5,29 +5,21 @@ const getAssessmentById = (assessmentId, tenantId) => {
     db.get(
       `
       SELECT
-ta.*,
-
-IFNULL(
-SUM(tp.payment_amount),
-0
-) AS paid_amount
-
-FROM tax_assessments ta
-
-LEFT JOIN tax_payments tp
-ON tp.assessment_id=ta.id
-
-WHERE ta.tenant_id=?
-
-GROUP BY ta.id
-
-ORDER BY ta.id DESC;
+          ta.*,
+          IFNULL(SUM(tp.payment_amount),0) AS paid_amount
+      FROM tax_assessments ta
+      LEFT JOIN tax_payments tp
+          ON tp.assessment_id = ta.id
+         AND tp.tenant_id = ta.tenant_id
+      WHERE ta.id = ?
+        AND ta.tenant_id = ?
+      GROUP BY ta.id
       `,
       [assessmentId, tenantId],
       (err, row) => {
         if (err) return reject(err);
         resolve(row || null);
-      },
+      }
     );
   });
 };
