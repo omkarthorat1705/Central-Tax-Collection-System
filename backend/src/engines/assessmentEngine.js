@@ -29,12 +29,12 @@ const generateAssessment = async (asset_id, financial_year) => {
 
         db.all(
           `
-          SELECT *
-          FROM asset_tax_mapping
-          WHERE citizen_asset_id = ?
-          AND is_deleted = 0
-          `,
-          [asset_id],
+  SELECT atm.*
+  FROM asset_tax_mapping atm
+  WHERE atm.citizen_asset_id = ?
+    AND IFNULL(atm.is_deleted,0)=0
+  `,
+          [asset.id],
 
           (err, taxes) => {
             if (err) {
@@ -46,6 +46,7 @@ const generateAssessment = async (asset_id, financial_year) => {
             }
 
             let completed = 0;
+            const generatedAssessments = [];
 
             taxes.forEach((tax) => {
               processTaxAssessment(
@@ -53,13 +54,18 @@ const generateAssessment = async (asset_id, financial_year) => {
                 tax,
                 financial_year,
                 () => {
+                  generatedAssessments.push(arguments[0]);
+
                   completed++;
 
                   if (completed === taxes.length) {
                     resolve({
+                      success: true,
                       asset_id,
                       financial_year,
-                      success: true,
+                      assessments: generatedAssessments,
+                      assessment_number,
+                      assessment_id: this.lastID,
                     });
                   }
                 },
@@ -85,16 +91,17 @@ const processTaxAssessment = (asset, tax, financial_year, callback, reject) => {
   db.all(
     `
     SELECT
-
-      apv.*,
-      p.parameter_code
-
-    FROM asset_parameter_values apv
-
-    LEFT JOIN parameters p
-    ON apv.parameter_id = p.id
-
-    WHERE apv.citizen_asset_id = ?
+    apv.parameter_value,
+    p.parameter_code,
+    p.parameter_type,
+    p.ui_component
+FROM asset_parameter_values apv
+INNER JOIN parameters p
+        ON p.id = apv.parameter_id
+WHERE apv.citizen_asset_id = ?
+  AND IFNULL(apv.is_deleted,0)=0
+  AND IFNULL(p.is_deleted,0)=0
+ORDER BY p.display_order;
     `,
     [asset.id],
 
@@ -119,12 +126,16 @@ const processTaxAssessment = (asset, tax, financial_year, callback, reject) => {
 
       db.get(
         `
-        SELECT *
-        FROM tax_rules
-        WHERE tax_type_id = ?
-        ORDER BY priority ASC
-        `,
-        [tax.tax_type_id],
+  SELECT *
+  FROM rules
+  WHERE tax_type_id = ?
+    AND tenant_id = ?
+    AND is_active = 1
+    AND is_deleted = 0
+  ORDER BY priority ASC
+  LIMIT 1
+  `,
+        [tax.tax_type_id, asset.tenant_id],
 
         (err, rule) => {
           if (err) {
@@ -163,19 +174,21 @@ const processTaxAssessment = (asset, tax, financial_year, callback, reject) => {
           db.get(
             `
             SELECT
-
-              IFNULL(
-                SUM(
-                  total_amount
-                ),
-                0
-              ) AS pending_amount
-
-            FROM tax_assessments
-
-            WHERE asset_id = ?
+IFNULL(
+SUM(
+CASE
+WHEN assessment_status!='PAID'
+THEN total_amount
+ELSE 0
+END
+),
+0
+) AS pending_amount
+FROM tax_assessments
+WHERE asset_id=?
+AND tenant_id=?
             `,
-            [asset.id],
+            [asset.id, asset.tenant_id],
 
             (err, dues) => {
               if (err) {
@@ -262,7 +275,7 @@ const createAssessment = (
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
-      1,
+      asset.tenant_id,
       asset.citizen_id,
       asset.id,
       tax.tax_type_id,
@@ -283,7 +296,12 @@ const createAssessment = (
 
       console.log("Assessment Generated:", assessmentNumber);
 
-      callback();
+      callback({
+        assessment_number: assessmentNumber,
+        asset_id: asset.id,
+        tax_type_id: tax.tax_type_id,
+        total_amount: totalAmount,
+      });
     },
   );
 };

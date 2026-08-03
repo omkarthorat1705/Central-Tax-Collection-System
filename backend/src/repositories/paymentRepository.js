@@ -2,21 +2,10 @@ const db = require("../config/db");
 
 const getAssessmentById = (assessmentId, tenantId) => {
   return new Promise((resolve, reject) => {
-    db.get(
-      `
-      SELECT *
-      FROM tax_assessments
+    const assessmentRepository = require("./assessmentRepository");
 
-      WHERE id = ?
-      AND tenant_id = ?
-      AND is_deleted = 0
-      `,
-      [assessmentId, tenantId],
-      (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      },
-    );
+const assessment =
+    await assessmentRepository.getAssessmentById(id);
   });
 };
 

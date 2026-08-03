@@ -44,7 +44,7 @@ const getRevenueSummary = (tenantId) => {
           SELECT COUNT(*)
           FROM tax_assessments
           WHERE tenant_id = ?
-          AND assessment_status = 'PARTIAL'
+          AND assessment_status IN ('PARTIAL','PARTIALLY_PAID')
           AND is_deleted = 0
         ) AS partial_cases
       `,

@@ -70,7 +70,7 @@ const getRuleByTaxType = (taxTypeId, tenantId) => {
     db.get(
       `
       SELECT *
-      FROM tax_rules
+      FROM rules
       WHERE tax_type_id = ?
       AND tenant_id = ?
       AND is_deleted = 0

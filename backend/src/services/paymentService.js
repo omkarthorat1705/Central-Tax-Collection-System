@@ -3,113 +3,92 @@ const paymentRepository = require("../repositories/paymentRepository");
 const { createAuditLog } = require("./auditService");
 
 const makePayment = async (payload, tenantId) => {
+  const { assessment_id, payment_amount, payment_mode } = payload;
+
+  const assessment = await paymentRepository.getAssessmentById(
+    assessment_id,
+    tenantId,
+  );
+
+  if (!assessment) {
+    throw new Error("Assessment not found");
+  }
+
+  const totalPaid = Number(
+    await paymentRepository.getTotalPaidAmount(assessment_id, tenantId),
+  );
+
+  const totalAmount = Number(assessment.total_amount);
+
+  const remainingAmount = Math.max(0, totalAmount - totalPaid);
+
+  if (remainingAmount <= 0) {
+    throw new Error("Assessment is already fully paid.");
+  }
+
+  const payment = Number(payment_amount);
+
+  if (payment <= 0) {
+    throw new Error("Invalid payment amount.");
+  }
+
+  if (payment > remainingAmount) {
+    throw new Error(
+      `Payment exceeds pending balance. Remaining balance: ₹${remainingAmount.toFixed(2)}`,
+    );
+  }
+
+  const paymentNumber = `RCPT-${Date.now()}`;
+
+  const paymentId = await paymentRepository.createPayment({
+    tenant_id: tenantId,
+    assessment_id,
+    payment_amount: payment,
+    payment_mode,
+    payment_number: paymentNumber,
+    collected_by: 1,
+  });
+
+  const updatedPaid = totalPaid + payment;
+
+  let status = "PENDING";
+
+  if (updatedPaid >= totalAmount) {
+    status = "PAID";
+  } else if (updatedPaid > 0) {
+    status = "PARTIAL";
+  }
+
+  await paymentRepository.updateAssessmentStatus(
+    assessment_id,
+    tenantId,
+    status.toUpperCase(),
+  );
+
   try {
-    const { assessment_id, payment_amount, payment_mode } = payload;
-
-    // =====================================
-    // GET ASSESSMENT
-    // =====================================
-
-    const assessment = await paymentRepository.getAssessmentById(
-      assessment_id,
-      tenantId,
-    );
-
-    if (!assessment) {
-      throw new Error("Assessment not found");
-    }
-
-    // =====================================
-    // GET TOTAL PAID
-    // =====================================
-
-    const totalPaid = await paymentRepository.getTotalPaidAmount(
-      assessment_id,
-      tenantId,
-    );
-
-    const remainingAmount = Math.max(
-      0,
-      Number(assessment.total_amount) - Number(totalPaid),
-    );
-
-    if (remainingAmount <= 0) {
-      throw new Error("Assessment is already fully paid.");
-    }
-
-    // =====================================
-    // VALIDATE PAYMENT
-    // =====================================
-
-    if (Number(payment_amount) > remainingAmount) {
-      throw new Error(
-        `Payment exceeds pending balance. Remaining balance: ₹${remainingAmount.toFixed(2)}`,
-      );
-    }
-
-    // =====================================
-    // PAYMENT NUMBER
-    // =====================================
-
-    const paymentNumber = "RCPT-" + Date.now();
-
-    // =====================================
-    // CREATE PAYMENT
-    // =====================================
-
-    const paymentId = await paymentRepository.createPayment({
-      tenant_id: tenantId,
-      assessment_id,
-      payment_amount,
-      payment_mode,
-      payment_number: paymentNumber,
-      collected_by: 1,
-    });
-
-    // =====================================
-    // UPDATE STATUS
-    // =====================================
-
-    const updatedPaid = Number(totalPaid) + Number(payment_amount);
-
-    const newStatus =
-      updatedPaid >= Number(assessment.total_amount) ? "PAID" : "PARTIAL";
-
-    await paymentRepository.updateAssessmentStatus(
-      assessment_id,
-      tenantId,
-      newStatus,
-    );
-
-    // =====================================
-    // AUDIT LOG
-    // =====================================
-
     await createAuditLog({
       tenant_id: tenantId,
       entity_name: "tax_payments",
       entity_id: paymentId,
       action_type: "CREATE",
       action_by: 1,
-      old_value: null,
-      new_value: JSON.stringify({
+      new_value: {
         assessment_id,
-        payment_amount,
+        payment_amount: payment,
         payment_mode,
-      }),
-      remarks: "Payment Collected",
+        payment_number: paymentNumber,
+      },
     });
-
-    return {
-      payment_id: paymentId,
-      payment_number: paymentNumber,
-      assessment_status: newStatus,
-      remaining_amount: Number(assessment.total_amount) - updatedPaid,
-    };
-  } catch (error) {
-    console.log(error);
-    throw error;
+  } catch (err) {
+    console.error(err.message);
   }
+
+  return {
+    payment_id: paymentId,
+    payment_number: paymentNumber,
+    assessment_status: status,
+    remaining_amount: Math.max(0, totalAmount - updatedPaid),
+  };
 };
 
 const listPayments = async (tenantId) => {

@@ -29,8 +29,16 @@ const createAuditLog = ({
         entity_name,
         entity_id,
         action_type,
-        old_value ? JSON.stringify(old_value) : null,
-        new_value ? JSON.stringify(new_value) : null,
+        typeof old_value === "string"
+          ? old_value
+          : old_value
+            ? JSON.stringify(old_value)
+            : null,
+        typeof new_value === "string"
+          ? new_value
+          : new_value
+            ? JSON.stringify(new_value)
+            : null,
         action_by,
       ],
       function (err) {
