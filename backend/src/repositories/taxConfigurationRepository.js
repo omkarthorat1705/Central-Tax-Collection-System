@@ -216,8 +216,39 @@ const createRule = (payload) => {
         0,
       ],
       function (err) {
-        if (err) reject(err);
-        else resolve(this.lastID);
+        if (err) return reject(err);
+
+        const ruleId = this.lastID;
+
+        db.run(
+          `
+        INSERT INTO tax_rules
+        (
+            tax_type_id,
+            parameter_id,
+            rule_name,
+            operator,
+            rule_value,
+            calculation_type,
+            calculation_value,
+            priority,
+            status
+        )
+        VALUES (?, NULL, ?, '=', ?, 'FIXED', ?, ?, 'ACTIVE')
+        `,
+          [
+            payload.tax_type_id,
+            payload.rule_name,
+            payload.formula_expression,
+            Number(payload.output_value || 0),
+            Number(payload.output_value || 0),
+            payload.priority || 1,
+          ],
+          (err2) => {
+            if (err2) return reject(err2);
+            resolve(ruleId);
+          },
+        );
       },
     );
   });

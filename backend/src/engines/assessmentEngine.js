@@ -94,7 +94,7 @@ const processTaxAssessment = (asset, tax, financial_year, callback, reject) => {
     LEFT JOIN parameters p
     ON apv.parameter_id = p.id
 
-    WHERE apv.asset_id = ?
+    WHERE apv.citizen_asset_id = ?
     `,
     [asset.id],
 
@@ -148,7 +148,13 @@ const processTaxAssessment = (asset, tax, financial_year, callback, reject) => {
           // CALCULATE TAX
           // =====================================
 
-          const calculatedAmount = calculateTax(parameterMap, rule);
+          let calculatedAmount;
+
+          try {
+            calculatedAmount = calculateTax(parameterMap, rule);
+          } catch (err) {
+            return reject(err.message);
+          }
 
           // =====================================
           // GET PREVIOUS DUES
@@ -167,7 +173,7 @@ const processTaxAssessment = (asset, tax, financial_year, callback, reject) => {
 
             FROM tax_assessments
 
-            WHERE citizen_asset_id = ?
+            WHERE asset_id = ?
             `,
             [asset.id],
 
@@ -207,9 +213,13 @@ const processTaxAssessment = (asset, tax, financial_year, callback, reject) => {
 // =========================================
 
 const calculateTax = (parameterMap, rule) => {
-  const area = Number(parameterMap["AREA"] || 0);
+  const area = parseFloat(parameterMap.AREA);
 
-  const rate = Number(rule.calculation_value || 0);
+  if (Number.isNaN(area)) {
+    throw new Error("AREA parameter missing for assessment");
+  }
+
+  const rate = parseFloat(rule.calculation_value || 0);
 
   return area * rate;
 };
