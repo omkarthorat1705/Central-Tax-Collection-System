@@ -189,6 +189,29 @@ const AssessmentsPage = () => {
                     <Typography sx={{ color: "#94a3b8" }}>
                       Total: ₹{Number(item.total_amount || 0).toFixed(2)}
                     </Typography>
+                    <Typography
+  sx={{
+    color: "#94a3b8",
+  }}
+>
+  Paid :
+  ₹
+  {Number(item.paid_amount || 0).toFixed(2)}
+</Typography>
+
+<Typography
+  sx={{
+    color: "#22c55e",
+    fontWeight: 700,
+  }}
+>
+  Balance :
+  ₹
+  {(
+    Number(item.total_amount || 0) -
+    Number(item.paid_amount || 0)
+  ).toFixed(2)}
+</Typography>
                   </Box>
                 </Grid>
               ))

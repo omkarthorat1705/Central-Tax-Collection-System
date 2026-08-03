@@ -5,7 +5,6 @@ import PeopleIcon from "@mui/icons-material/People";
 import HomeWorkIcon from "@mui/icons-material/HomeWork";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import PaymentsIcon from "@mui/icons-material/Payments";
-import SettingsIcon from "@mui/icons-material/Settings";
 import RuleIcon from "@mui/icons-material/Rule";
 import TuneIcon from "@mui/icons-material/Tune";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
@@ -50,11 +49,6 @@ const menus = [
     title: "Parameters",
     path: "/parameters",
     icon: <TuneIcon />,
-  },
-  {
-    title: "Settings",
-    path: "/settings",
-    icon: <SettingsIcon />,
   },
 ];
 

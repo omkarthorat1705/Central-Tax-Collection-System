@@ -54,7 +54,19 @@ const generateAssessment = async (asset_id, financial_year) => {
                 tax,
                 financial_year,
                 () => {
-                  generatedAssessments.push(arguments[0]);
+                  (assessment) => {
+                    generatedAssessments.push(assessment);
+                    completed++;
+
+                    if (completed === taxes.length) {
+                      resolve({
+                        success: true,
+                        asset_id,
+                        financial_year,
+                        assessments: generatedAssessments,
+                      });
+                    }
+                  };
 
                   completed++;
 
@@ -64,7 +76,6 @@ const generateAssessment = async (asset_id, financial_year) => {
                       asset_id,
                       financial_year,
                       assessments: generatedAssessments,
-                      assessment_id: this.lastID,
                     });
                   }
                 },
@@ -225,15 +236,22 @@ AND tenant_id=?
 // =========================================
 
 const calculateTax = (parameterMap, rule) => {
-  const area = parseFloat(parameterMap.AREA);
+  const rate = Number(rule.output_value || 0);
 
-  if (Number.isNaN(area)) {
-    throw new Error("AREA parameter missing for assessment");
+  switch ((rule.formula_expression || "").toUpperCase()) {
+    case "RATE * AREA":
+    case "AREA * RATE": {
+      const area = Number(parameterMap.AREA || 0);
+
+      return area * rate;
+    }
+
+    case "X":
+      return rate;
+
+    default:
+      return rate;
   }
-
-  const rate = parseFloat(rule.calculation_value || 0);
-
-  return area * rate;
 };
 
 // =========================================

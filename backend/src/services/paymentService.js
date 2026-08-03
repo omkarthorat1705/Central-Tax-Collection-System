@@ -53,7 +53,7 @@ const makePayment = async (payload, tenantId) => {
 
   let status = "PENDING";
 
-  if (updatedPaid >= totalAmount) {
+  if (updatedPaid >= totalAmount - 0.01) {
     status = "PAID";
   } else if (updatedPaid > 0) {
     status = "PARTIAL";

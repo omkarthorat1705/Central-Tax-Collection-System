@@ -19,8 +19,11 @@ const PaymentsPage = () => {
   const [selectedAssessment, setSelectedAssessment] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMode, setPaymentMode] = useState("CASH");
-  const [helperText, setHelperText] = useState("Choose an outstanding assessment and enter the amount to collect.");
+  const [helperText, setHelperText] = useState(
+    "Choose an outstanding assessment and enter the amount to collect.",
+  );
   const [payments, setPayments] = useState([]);
+  const [selectedAssessmentData, setSelectedAssessmentData] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -65,7 +68,10 @@ const PaymentsPage = () => {
       });
       setPaymentAmount("");
       setSelectedAssessment("");
-      setHelperText("Payment recorded successfully. It will appear in the payment ledger below.");
+      setSelectedAssessmentData(null);
+      setHelperText(
+        "Payment recorded successfully. It will appear in the payment ledger below.",
+      );
       await loadPayments();
       await loadAssessments();
       alert("Payment collected successfully");
@@ -89,7 +95,10 @@ const PaymentsPage = () => {
           </Typography>
         </Box>
 
-        <EnterpriseSectionCard title="Collect Payment" subtitle="Record a payment against an outstanding assessment.">
+        <EnterpriseSectionCard
+          title="Collect Payment"
+          subtitle="Record a payment against an outstanding assessment."
+        >
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 5 }}>
               <TextField
@@ -98,16 +107,37 @@ const PaymentsPage = () => {
                 label="Assessment *"
                 value={selectedAssessment}
                 onChange={(event) => {
+                  const assessment = assessments.find(
+                    (a) => Number(a.id) === Number(event.target.value),
+                  );
+
                   setSelectedAssessment(event.target.value);
-                  if (event.target.value) {
-                    setHelperText("Assessment selected. Enter the payment amount to record the transaction.");
+                  setSelectedAssessmentData(assessment || null);
+
+                  if (assessment) {
+                    const paid = Number(assessment.paid_amount || 0);
+
+                    const total = Number(assessment.total_amount || 0);
+
+                    const balance = total - paid;
+
+                    setPaymentAmount(balance > 0 ? balance : "");
+
+                    setHelperText(
+                      `Outstanding Balance : ₹${balance.toFixed(2)}`,
+                    );
                   }
                 }}
-                helperText={assessments.length === 0 ? "Generate an assessment first so there is an outstanding balance to collect." : helperText}
+                helperText={
+                  assessments.length === 0
+                    ? "Generate an assessment first so there is an outstanding balance to collect."
+                    : helperText
+                }
               >
                 {assessments.map((item) => (
                   <MenuItem key={item.id} value={item.id}>
-                    {item.assessment_number || `ASM-${item.id}`} • ₹{Number(item.total_amount || 0).toFixed(2)}
+                    {item.assessment_number || `ASM-${item.id}`} • ₹
+                    {Number(item.total_amount || 0).toFixed(2)}
                   </MenuItem>
                 ))}
               </TextField>
@@ -120,6 +150,13 @@ const PaymentsPage = () => {
                 value={paymentAmount}
                 onChange={(event) => setPaymentAmount(event.target.value)}
                 helperText="Enter an amount that is less than or equal to the assessment balance."
+                inputProps={{
+                  min: 1,
+                  max: selectedAssessmentData
+                    ? Number(selectedAssessmentData.total_amount) -
+                      Number(selectedAssessmentData.paid_amount || 0)
+                    : undefined,
+                }}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
@@ -138,6 +175,50 @@ const PaymentsPage = () => {
             </Grid>
           </Grid>
 
+          {selectedAssessmentData && (
+            <Grid size={12}>
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  background: "#132238",
+                  border: "1px solid rgba(255,255,255,.08)",
+                }}
+              >
+                <Typography color="white" fontWeight={700}>
+                  Assessment Summary
+                </Typography>
+
+                <Typography color="#cbd5e1">
+                  Assessment :{selectedAssessmentData.assessment_number}
+                </Typography>
+
+                <Typography color="#cbd5e1">
+                  Total : ₹
+                  {Number(selectedAssessmentData.total_amount).toFixed(2)}
+                </Typography>
+
+                <Typography color="#cbd5e1">
+                  Paid : ₹
+                  {Number(selectedAssessmentData.paid_amount || 0).toFixed(2)}
+                </Typography>
+
+                <Typography
+                  sx={{
+                    color: "#10b981",
+                    fontWeight: 700,
+                  }}
+                >
+                  Balance : ₹
+                  {(
+                    Number(selectedAssessmentData.total_amount) -
+                    Number(selectedAssessmentData.paid_amount || 0)
+                  ).toFixed(2)}
+                </Typography>
+              </Box>
+            </Grid>
+          )}
+
           <Box sx={{ mt: 2 }}>
             <Button
               variant="contained"
@@ -150,15 +231,23 @@ const PaymentsPage = () => {
           </Box>
         </EnterpriseSectionCard>
 
-        <EnterpriseSectionCard title="Payment Ledger" subtitle="Recent payments recorded in the system.">
+        <EnterpriseSectionCard
+          title="Payment Ledger"
+          subtitle="Recent payments recorded in the system."
+        >
           <Grid container spacing={2}>
             {loading ? (
               <Grid size={12}>
-                <Typography color="text.secondary">Loading payments...</Typography>
+                <Typography color="text.secondary">
+                  Loading payments...
+                </Typography>
               </Grid>
             ) : payments.length === 0 ? (
               <Grid size={12}>
-                <Typography color="text.secondary">No payments recorded yet. Use the form above to collect the first payment.</Typography>
+                <Typography color="text.secondary">
+                  No payments recorded yet. Use the form above to collect the
+                  first payment.
+                </Typography>
               </Grid>
             ) : (
               payments.map((item) => (
@@ -171,16 +260,29 @@ const PaymentsPage = () => {
                       background: "rgba(255,255,255,0.04)",
                     }}
                   >
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: 2,
+                      }}
+                    >
                       <Box>
                         <Typography sx={{ color: "#fff", fontWeight: 700 }}>
                           {item.payment_number || `RCPT-${item.id}`}
                         </Typography>
-                        <Typography sx={{ color: "#94a3b8", fontSize: 13, mt: 0.5 }}>
+                        <Typography
+                          sx={{ color: "#94a3b8", fontSize: 13, mt: 0.5 }}
+                        >
                           {item.assessment_number || "Assessment"}
                         </Typography>
                       </Box>
-                      <Chip label={item.payment_mode || "CASH"} color="success" size="small" />
+                      <Chip
+                        label={item.payment_mode || "CASH"}
+                        color="success"
+                        size="small"
+                      />
                     </Box>
                     <Typography sx={{ color: "#94a3b8", mt: 2 }}>
                       Amount: ₹{Number(item.payment_amount || 0).toFixed(2)}

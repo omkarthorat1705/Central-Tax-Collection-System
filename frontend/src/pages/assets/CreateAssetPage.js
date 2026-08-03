@@ -466,7 +466,9 @@ export default function CreateAssetPage() {
                   </Grid>
                   <Grid size={12}>
                     <Typography>
-                      <strong>Asset Type:</strong> {form.asset_type}
+                      <strong>Asset Type:</strong> Asset Type:
+                      {assetTypes.find((x) => x.id === Number(form.asset_type))
+                        ?.asset_type_name || "-"}
                     </Typography>
                   </Grid>
                   <Grid size={12}>
