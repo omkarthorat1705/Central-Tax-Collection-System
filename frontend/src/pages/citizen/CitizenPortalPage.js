@@ -56,12 +56,31 @@ const CitizenPortalPage = () => {
   const handleLogin = async () => {
     try {
       setLoading(true);
+
+      if (!form.tenantCode || !form.citizenCode || !form.password) {
+        alert("Please fill all fields.");
+        return;
+      }
+
       const response = await API.post("/citizen/login", form);
-      const data = response.data.data;
-      localStorage.setItem("citizenToken", data.token);
-      localStorage.setItem("citizen", JSON.stringify(data.citizen));
-      setCitizen(data.citizen);
-      await loadPortal();
+
+      const { token, citizen } = response.data.data;
+
+      localStorage.setItem("citizenToken", token);
+      localStorage.setItem("citizen", JSON.stringify(citizen));
+
+      API.defaults.headers.common.Authorization = `Bearer ${token}`;
+
+      setCitizen(citizen);
+
+      const portalResponse = await API.get("/citizen/portal");
+
+      setSummary(
+        portalResponse.data.data || {
+          assessments: [],
+          payments: [],
+        },
+      );
     } catch (error) {
       alert(error.response?.data?.error || "Citizen login failed");
     } finally {
@@ -71,8 +90,20 @@ const CitizenPortalPage = () => {
 
   const loadPortal = async () => {
     try {
+      const token = localStorage.getItem("citizenToken");
+
+      if (!token) return;
+
+      API.defaults.headers.common.Authorization = `Bearer ${token}`;
+
       const response = await API.get("/citizen/portal");
-      setSummary(response.data.data || { assessments: [], payments: [] });
+
+      setSummary(
+        response.data.data || {
+          assessments: [],
+          payments: [],
+        },
+      );
     } catch (error) {
       console.error(error);
     }
@@ -127,6 +158,10 @@ const CitizenPortalPage = () => {
     loadAuthorities();
 
     const token = localStorage.getItem("citizenToken");
+
+    if (token) {
+      API.defaults.headers.common.Authorization = `Bearer ${token}`;
+    }
 
     const citizen = localStorage.getItem("citizen");
 
@@ -219,7 +254,12 @@ const CitizenPortalPage = () => {
                   </Button>
 
                   <Stack direction="row" spacing={2}>
-                    <Button variant="contained" fullWidth  sx={{ flex: 2 }} onClick={handleLogin}>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      sx={{ flex: 2 }}
+                      onClick={handleLogin}
+                    >
                       Login
                     </Button>
                   </Stack>
