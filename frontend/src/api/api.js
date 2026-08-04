@@ -5,12 +5,28 @@ const API = axios.create({
 });
 
 API.interceptors.request.use((config) => {
-  const citizenToken = localStorage.getItem("citizenToken");
-  const adminToken = localStorage.getItem("token");
-  const token = citizenToken || adminToken;
+  const url = config.url || "";
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  // Citizen APIs
+  if (url.startsWith("/citizen")) {
+    const token = localStorage.getItem("citizenToken");
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      delete config.headers.Authorization;
+    }
+
+    return config;
+  }
+
+  // Admin APIs
+  const adminToken = localStorage.getItem("token");
+
+  if (adminToken) {
+    config.headers.Authorization = `Bearer ${adminToken}`;
+  } else {
+    delete config.headers.Authorization;
   }
 
   return config;

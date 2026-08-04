@@ -61,26 +61,26 @@ const CitizenPortalPage = () => {
         alert("Please fill all fields.");
         return;
       }
+const response = await API.post("/citizen/login", form);
 
-      const response = await API.post("/citizen/login", form);
+const loginData = response.data.data;
 
-      const { token, citizen } = response.data.data;
+localStorage.setItem("citizenToken", loginData.token);
+localStorage.setItem("citizen", JSON.stringify(loginData.citizen));
 
-      localStorage.setItem("citizenToken", token);
-      localStorage.setItem("citizen", JSON.stringify(citizen));
+setCitizen(loginData.citizen);
 
-      API.defaults.headers.common.Authorization = `Bearer ${token}`;
+// IMPORTANT
+await new Promise((resolve) => setTimeout(resolve, 20));
 
-      setCitizen(citizen);
+const portalResponse = await API.get("/citizen/portal");
 
-      const portalResponse = await API.get("/citizen/portal");
-
-      setSummary(
-        portalResponse.data.data || {
-          assessments: [],
-          payments: [],
-        },
-      );
+setSummary(
+    portalResponse.data.data || {
+        assessments: [],
+        payments: [],
+    },
+);
     } catch (error) {
       alert(error.response?.data?.error || "Citizen login failed");
     } finally {
@@ -93,8 +93,6 @@ const CitizenPortalPage = () => {
       const token = localStorage.getItem("citizenToken");
 
       if (!token) return;
-
-      API.defaults.headers.common.Authorization = `Bearer ${token}`;
 
       const response = await API.get("/citizen/portal");
 
@@ -126,6 +124,7 @@ const CitizenPortalPage = () => {
 
       newPassword: "",
     });
+    delete API.defaults.headers.common.Authorization;
     navigate("/");
   };
 
@@ -157,19 +156,15 @@ const CitizenPortalPage = () => {
   useEffect(() => {
     loadAuthorities();
 
-    const token = localStorage.getItem("citizenToken");
-
-    if (token) {
-      API.defaults.headers.common.Authorization = `Bearer ${token}`;
-    }
-
     const citizen = localStorage.getItem("citizen");
 
-    if (token && citizen) {
-      setCitizen(JSON.parse(citizen));
+    const storedCitizen = localStorage.getItem("citizen");
 
-      loadPortal();
+    if (storedCitizen) {
+      setCitizen(JSON.parse(storedCitizen));
     }
+
+    loadPortal();
   }, []);
 
   return (
