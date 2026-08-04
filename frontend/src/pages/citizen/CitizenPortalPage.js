@@ -6,6 +6,7 @@ import {
   CardContent,
   Container,
   Grid,
+  MenuItem,
   Paper,
   Stack,
   TextField,
@@ -13,6 +14,7 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/api";
+import { getAuthorities } from "../../services/tenantService";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 const CitizenPortalPage = () => {
@@ -23,6 +25,7 @@ const CitizenPortalPage = () => {
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const [authorities, setAuthorities] = useState([]);
   const [citizen, setCitizen] = useState(null);
   const [summary, setSummary] = useState({ assessments: [], payments: [] });
   const [passwordForm, setPasswordForm] = useState({
@@ -38,6 +41,16 @@ const CitizenPortalPage = () => {
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const loadAuthorities = async () => {
+    try {
+      const data = await getAuthorities();
+
+      setAuthorities(data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleLogin = async () => {
@@ -70,6 +83,18 @@ const CitizenPortalPage = () => {
     localStorage.removeItem("citizen");
     setCitizen(null);
     setSummary({ assessments: [], payments: [] });
+    setPaymentForm({
+      assessment_id: "",
+
+      payment_amount: "",
+
+      payment_mode: "CASH",
+    });
+    setPasswordForm({
+      currentPassword: "",
+
+      newPassword: "",
+    });
     navigate("/");
   };
 
@@ -99,6 +124,8 @@ const CitizenPortalPage = () => {
   };
 
   useEffect(() => {
+    loadAuthorities();
+
     const token = localStorage.getItem("citizenToken");
 
     const citizen = localStorage.getItem("citizen");
@@ -123,8 +150,12 @@ const CitizenPortalPage = () => {
           <Card
             sx={{
               borderRadius: 4,
-              background: "rgba(255,255,255,0.06)",
-              backdropFilter: "blur(20px)",
+
+              background: "rgba(255,255,255,.05)",
+
+              backdropFilter: "blur(12px)",
+
+              border: "1px solid rgba(255,255,255,.08)",
             }}
           >
             <CardContent sx={{ p: 4 }}>
@@ -138,12 +169,25 @@ const CitizenPortalPage = () => {
 
               <Stack spacing={2}>
                 <TextField
-                  label="Authority Code"
+                  select
+                  label="Authority"
                   name="tenantCode"
                   value={form.tenantCode}
                   onChange={handleChange}
                   fullWidth
-                />
+                >
+                  {authorities.map((authority) => (
+                    <MenuItem
+                      key={authority.tenant_code}
+                      value={authority.tenant_code}
+                    >
+                      {authority.tenant_name}
+                      {" ("}
+                      {authority.tenant_code}
+                      {")"}
+                    </MenuItem>
+                  ))}
+                </TextField>
                 <TextField
                   label="Citizen Code"
                   name="citizenCode"
@@ -170,18 +214,15 @@ const CitizenPortalPage = () => {
                     variant="outlined"
                     startIcon={<ArrowBackIcon />}
                     onClick={() => navigate("/")}
-                    sx={{ flex: 1 }}
                   >
                     Back
                   </Button>
 
-                  <Button
-                    variant="contained"
-                    onClick={handleLogin}
-                    sx={{ flex: 2 }}
-                  >
-                    Login
-                  </Button>
+                  <Stack direction="row" spacing={2}>
+                    <Button variant="contained" fullWidth  sx={{ flex: 2 }} onClick={handleLogin}>
+                      Login
+                    </Button>
+                  </Stack>
                 </Box>
               </Stack>
             </CardContent>
@@ -250,7 +291,12 @@ const CitizenPortalPage = () => {
                       }
                       fullWidth
                     />
-                    <Button variant="contained" onClick={handlePasswordChange}>
+                    <Button
+                      variant="contained"
+                      size="large"
+                      fullWidth
+                      onClick={handlePasswordChange}
+                    >
                       Update Password
                     </Button>
                   </Stack>
@@ -300,7 +346,12 @@ const CitizenPortalPage = () => {
                       }
                       fullWidth
                     />
-                    <Button variant="contained" onClick={handlePayment}>
+                    <Button
+                      variant="contained"
+                      size="large"
+                      fullWidth
+                      onClick={handlePayment}
+                    >
                       Record Payment
                     </Button>
                   </Stack>
