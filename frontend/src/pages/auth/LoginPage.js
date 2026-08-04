@@ -17,6 +17,8 @@ import { getAuthorities } from "../../services/tenantService";
 
 import { login } from "../../services/authService";
 
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+
 const LoginPage = () => {
   const navigate = useNavigate();
 
@@ -128,18 +130,30 @@ const LoginPage = () => {
               onChange={(e) => setPassword(e.target.value)}
             />
 
-            <Button
-              fullWidth
-              variant="contained"
-              size="large"
+            <Box
               sx={{
+                display: "flex",
+                gap: 2,
                 mt: 4,
-                py: 1.5,
               }}
-              onClick={handleLogin}
             >
-              Login
-            </Button>
+              <Button
+                variant="outlined"
+                startIcon={<ArrowBackIcon />}
+                onClick={() => navigate("/")}
+                sx={{ flex: 1 }}
+              >
+                Back
+              </Button>
+
+              <Button
+                variant="contained"
+                onClick={handleLogin}
+                sx={{ flex: 2 }}
+              >
+                Login
+              </Button>
+            </Box>
           </CardContent>
         </Card>
       </Container>
