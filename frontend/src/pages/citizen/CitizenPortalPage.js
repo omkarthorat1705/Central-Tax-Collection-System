@@ -124,7 +124,6 @@ setSummary(
 
       newPassword: "",
     });
-    delete API.defaults.headers.common.Authorization;
     navigate("/");
   };
 

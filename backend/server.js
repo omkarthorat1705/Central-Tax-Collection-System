@@ -223,8 +223,21 @@ const { ensureSeedData } = require("./src/utils/seedData");
 
 app.use("/", authRoutes);
 app.use("/", tenantRoutes);
+
+/*
+ * Public Citizen Portal routes.
+ * Login is public.
+ * Other citizen APIs are protected by citizenAuthMiddleware
+ * inside citizenPortalRoutes.js itself.
+ */
+app.use("/", citizenPortalRoutes);
+
+/*
+ * Admin APIs
+ */
 app.use(authMiddleware);
 app.use(tenantMiddleware);
+
 app.use("/", citizenRoutes);
 app.use("/assets", assetRoutes);
 app.use("/", assessmentRoutes);
@@ -236,7 +249,6 @@ app.use("/", ruleRoutes);
 app.use("/", financialYearRoutes);
 app.use("/", assessmentLifecycleRoutes);
 app.use("/", demandRoutes);
-app.use("/", citizenPortalRoutes);
 // app.use("/", lifecycleRoutes);
 
 // cron.schedule("0 0 * * *", async () => {
