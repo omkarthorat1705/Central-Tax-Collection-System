@@ -186,7 +186,7 @@ const CitizenPortalPage = () => {
         py: 6,
       }}
     >
-      <Container maxWidth="md">
+      <Container maxWidth="xl">
         {!citizen ? (
           <Card
             sx={{
@@ -312,7 +312,13 @@ const CitizenPortalPage = () => {
               </Button>
             </Box>
 
-            <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid
+              container
+              spacing={3}
+              sx={{
+                mb: 4,
+              }}
+            >
               <Grid item xs={12} md={3}>
                 <Paper
                   sx={{
@@ -416,13 +422,16 @@ const CitizenPortalPage = () => {
               </Grid>
             </Grid>
 
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={8}>
+            <Grid container spacing={3} alignItems="flex-start">
+              <Grid item xs={12} lg={3}>
                 <Paper
                   sx={{
                     p: 3,
                     borderRadius: 3,
                     background: "#132238",
+                    height: 650,
+                    display: "flex",
+                    flexDirection: "column",
                   }}
                 >
                   <Typography
@@ -435,72 +444,83 @@ const CitizenPortalPage = () => {
                   >
                     Outstanding Assessments
                   </Typography>
+                  <Box
+                    sx={{
+                      overflowY: "auto",
+                      pr: 1,
+                      flex: 1,
+                    }}
+                  >
+                    {summary.assessments.length === 0 ? (
+                      <Typography color="#94a3b8">
+                        No assessments available.
+                      </Typography>
+                    ) : (
+                      summary.assessments
+                        .filter((a) => a.assessment_status !== "PAID")
+                        .map((assessment) => {
+                          const paid = summary.payments
+                            .filter(
+                              (payment) =>
+                                Number(payment.assessment_id) ===
+                                Number(assessment.id),
+                            )
+                            .reduce(
+                              (sum, payment) =>
+                                sum + Number(payment.payment_amount || 0),
+                              0,
+                            );
 
-                  {summary.assessments.length === 0 ? (
-                    <Typography color="#94a3b8">
-                      No assessments available.
-                    </Typography>
-                  ) : (
-                    summary.assessments.map((assessment) => {
-                      const paid = summary.payments
-                        .filter(
-                          (payment) =>
-                            Number(payment.assessment_id) ===
-                            Number(assessment.id),
-                        )
-                        .reduce(
-                          (sum, payment) =>
-                            sum + Number(payment.payment_amount || 0),
-                          0,
-                        );
+                          const balance =
+                            Number(assessment.total_amount) - paid;
 
-                      const balance = Number(assessment.total_amount) - paid;
+                          return (
+                            <Paper
+                              key={assessment.id}
+                              sx={{
+                                p: 2,
+                                mb: 2,
+                                background: "#1e293b",
+                                borderRadius: 2,
+                              }}
+                            >
+                              <Typography
+                                sx={{
+                                  color: "#fff",
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {assessment.assessment_number}
+                              </Typography>
 
-                      return (
-                        <Paper
-                          key={assessment.id}
-                          sx={{
-                            p: 2,
-                            mb: 2,
-                            background: "#1e293b",
-                            borderRadius: 2,
-                          }}
-                        >
-                          <Typography
-                            sx={{
-                              color: "#fff",
-                              fontWeight: 700,
-                            }}
-                          >
-                            {assessment.assessment_number}
-                          </Typography>
+                              <Typography color="#94a3b8">
+                                ₹ {Number(assessment.total_amount).toFixed(2)}
+                              </Typography>
 
-                          <Typography color="#94a3b8">
-                            ₹ {Number(assessment.total_amount).toFixed(2)}
-                          </Typography>
+                              <Typography color="#22c55e">
+                                Balance : ₹ {balance.toFixed(2)}
+                              </Typography>
 
-                          <Typography color="#22c55e">
-                            Balance : ₹ {balance.toFixed(2)}
-                          </Typography>
-
-                          <Button
-                            size="small"
-                            sx={{ mt: 1 }}
-                            variant="contained"
-                            onClick={() =>
-                              setPaymentForm({
-                                assessment_id: assessment.id,
-                                payment_amount: balance,
-                                payment_mode: "CASH",
-                              })
-                            }
-                          >
-                            Pay Now
-                          </Button>
-                        </Paper>
-                      );
-                    })
-                  )}
+                              <Button
+                                size="small"
+                                sx={{ mt: 1 }}
+                                variant="contained"
+                                onClick={() =>
+                                  setPaymentForm({
+                                    assessment_id: assessment.id,
+                                    payment_amount:
+                                      balance > 0 ? balance.toFixed(2) : "",
+                                    payment_mode: "CASH",
+                                  })
+                                }
+                              >
+                                Pay Now
+                              </Button>
+                            </Paper>
+                          );
+                        })
+                    )}
+                  </Box>
                 </Paper>
               </Grid>
 
@@ -578,7 +598,159 @@ const CitizenPortalPage = () => {
                   </Stack>
                 </Paper>
               </Grid>
+
+              <Grid item xs={12} lg={4}>
+                <Stack spacing={3}>
+                  <Paper
+                    sx={{
+                      p: 3,
+                      borderRadius: 3,
+                      background: "#132238",
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 700,
+                        color: "#fff",
+                        mb: 2,
+                      }}
+                    >
+                      Citizen Profile
+                    </Typography>
+
+                    <Typography color="#94a3b8">Name</Typography>
+
+                    <Typography color="#fff" sx={{ mb: 2 }}>
+                      {citizen.full_name}
+                    </Typography>
+
+                    <Typography color="#94a3b8">Citizen Code</Typography>
+
+                    <Typography color="#fff" sx={{ mb: 2 }}>
+                      {citizen.citizen_code}
+                    </Typography>
+
+                    <Typography color="#94a3b8">Authority</Typography>
+
+                    <Typography color="#fff">{citizen.tenant_name}</Typography>
+                  </Paper>
+
+                  <Paper
+                    sx={{
+                      p: 3,
+                      borderRadius: 3,
+                      background: "#132238",
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 700,
+                        color: "#fff",
+                        mb: 2,
+                      }}
+                    >
+                      Recent Payments
+                    </Typography>
+
+                    {summary.payments.length === 0 ? (
+                      <Typography color="#94a3b8">
+                        No payments available.
+                      </Typography>
+                    ) : (
+                      summary.payments.slice(0, 5).map((payment) => (
+                        <Box
+                          key={payment.id}
+                          sx={{
+                            borderBottom: "1px solid rgba(255,255,255,.06)",
+                            py: 1,
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "#fff",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {payment.payment_number}
+                          </Typography>
+
+                          <Typography color="#94a3b8">
+                            ₹ {Number(payment.payment_amount).toFixed(2)}
+                          </Typography>
+                        </Box>
+                      ))
+                    )}
+                  </Paper>
+                </Stack>
+              </Grid>
             </Grid>
+
+            {/* <Paper
+              sx={{
+                mt: 3,
+                p: 3,
+                borderRadius: 3,
+                background: "#132238",
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  color: "#fff",
+                  fontWeight: 700,
+                  mb: 2,
+                }}
+              >
+                Change Password
+              </Typography>
+
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={5}>
+                  <TextField
+                    fullWidth
+                    label="Current Password"
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) =>
+                      setPasswordForm({
+                        ...passwordForm,
+
+                        currentPassword: e.target.value,
+                      })
+                    }
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={5}>
+                  <TextField
+                    fullWidth
+                    label="New Password"
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) =>
+                      setPasswordForm({
+                        ...passwordForm,
+
+                        newPassword: e.target.value,
+                      })
+                    }
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={2}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    sx={{ height: "100%" }}
+                    onClick={handlePasswordChange}
+                  >
+                    Update
+                  </Button>
+                </Grid>
+              </Grid>
+            </Paper> */}
           </>
         )}
       </Container>
