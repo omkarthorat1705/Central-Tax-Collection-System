@@ -415,6 +415,170 @@ const CitizenPortalPage = () => {
                 </Paper>
               </Grid>
             </Grid>
+
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={8}>
+                <Paper
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    background: "#132238",
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: "#fff",
+                      fontWeight: 700,
+                      mb: 2,
+                    }}
+                  >
+                    Outstanding Assessments
+                  </Typography>
+
+                  {summary.assessments.length === 0 ? (
+                    <Typography color="#94a3b8">
+                      No assessments available.
+                    </Typography>
+                  ) : (
+                    summary.assessments.map((assessment) => {
+                      const paid = summary.payments
+                        .filter(
+                          (payment) =>
+                            Number(payment.assessment_id) ===
+                            Number(assessment.id),
+                        )
+                        .reduce(
+                          (sum, payment) =>
+                            sum + Number(payment.payment_amount || 0),
+                          0,
+                        );
+
+                      const balance = Number(assessment.total_amount) - paid;
+
+                      return (
+                        <Paper
+                          key={assessment.id}
+                          sx={{
+                            p: 2,
+                            mb: 2,
+                            background: "#1e293b",
+                            borderRadius: 2,
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "#fff",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {assessment.assessment_number}
+                          </Typography>
+
+                          <Typography color="#94a3b8">
+                            ₹ {Number(assessment.total_amount).toFixed(2)}
+                          </Typography>
+
+                          <Typography color="#22c55e">
+                            Balance : ₹ {balance.toFixed(2)}
+                          </Typography>
+
+                          <Button
+                            size="small"
+                            sx={{ mt: 1 }}
+                            variant="contained"
+                            onClick={() =>
+                              setPaymentForm({
+                                assessment_id: assessment.id,
+                                payment_amount: balance,
+                                payment_mode: "CASH",
+                              })
+                            }
+                          >
+                            Pay Now
+                          </Button>
+                        </Paper>
+                      );
+                    })
+                  )}
+                </Paper>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Paper
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    background: "#132238",
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: "#fff",
+                      fontWeight: 700,
+                      mb: 2,
+                    }}
+                  >
+                    Make Payment
+                  </Typography>
+
+                  <Stack spacing={2}>
+                    <TextField
+                      select
+                      label="Assessment"
+                      value={paymentForm.assessment_id}
+                      onChange={(e) =>
+                        setPaymentForm({
+                          ...paymentForm,
+                          assessment_id: e.target.value,
+                        })
+                      }
+                    >
+                      {summary.assessments
+                        .filter((a) => a.assessment_status !== "PAID")
+                        .map((assessment) => (
+                          <MenuItem key={assessment.id} value={assessment.id}>
+                            {assessment.assessment_number}
+                          </MenuItem>
+                        ))}
+                    </TextField>
+
+                    <TextField
+                      label="Amount"
+                      type="number"
+                      value={paymentForm.payment_amount}
+                      onChange={(e) =>
+                        setPaymentForm({
+                          ...paymentForm,
+                          payment_amount: e.target.value,
+                        })
+                      }
+                    />
+
+                    <TextField
+                      select
+                      label="Payment Mode"
+                      value={paymentForm.payment_mode}
+                      onChange={(e) =>
+                        setPaymentForm({
+                          ...paymentForm,
+                          payment_mode: e.target.value,
+                        })
+                      }
+                    >
+                      <MenuItem value="CASH">Cash</MenuItem>
+                      <MenuItem value="ONLINE">Online</MenuItem>
+                      <MenuItem value="CHEQUE">Cheque</MenuItem>
+                    </TextField>
+
+                    <Button variant="contained" onClick={handlePayment}>
+                      Pay
+                    </Button>
+                  </Stack>
+                </Paper>
+              </Grid>
+            </Grid>
           </>
         )}
       </Container>
