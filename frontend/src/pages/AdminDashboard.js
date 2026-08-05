@@ -56,28 +56,23 @@ const formatCurrency = (amount) => {
 };
 
 const COLORS = [
-  "#3B82F6",
-  "#10B981",
-  "#F59E0B",
-  "#EF4444",
-  "#8B5CF6",
-  "#06B6D4",
-  "#14B8A6",
-  "#F97316",
+  "#3b82f6",
+  "#22c55e",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#06b6d4",
 ];
 
 const calculateCollectionEfficiency = (summary) => {
   const total =
     Number(summary.total_collection || 0) + Number(summary.total_pending || 0);
-
   if (!total) return 0;
-
   return ((summary.total_collection / total) * 100).toFixed(1);
 };
 
 const averageAssessment = (summary) => {
   if (!summary.total_assessments) return 0;
-
   return Number(summary.total_pending || 0) / Number(summary.total_assessments);
 };
 
@@ -100,39 +95,34 @@ const AdminDashboard = () => {
     partial_cases: 0,
   });
 
-  const [dashboardLoading, setDashboardLoading] = useState(true);
-  const [wardCollection, setWardCollection] = useState([]);
-
+const [dashboardLoading, setDashboardLoading] = useState(true);
   const [taxCollection, setTaxCollection] = useState([]);
+   const [wardCollection, setWardCollection] = useState([]);
 
-  const cards = [
+    const cards = [
     {
-      title: "Assessments",
+      title: "Total Assessments",
       value: dashboardSummary.total_assessments,
-      icon: <Assessment sx={{ fontSize: 38 }} />,
-      color: "#3B82F6",
-      subtitle: "Generated",
+      icon: <Assessment sx={{ fontSize: 42 }} />,
+      color: "#38bdf8",
     },
     {
-      title: "Revenue",
+      title: "Revenue Collected",
       value: formatCurrency(dashboardSummary.total_collection),
-      icon: <Payments sx={{ fontSize: 38 }} />,
-      color: "#10B981",
-      subtitle: "Collected",
+      icon: <Payments sx={{ fontSize: 42 }} />,
+      color: "#22c55e",
     },
     {
-      title: "Pending",
+      title: "Pending Revenue",
       value: formatCurrency(dashboardSummary.total_pending),
-      icon: <AccountBalance sx={{ fontSize: 38 }} />,
-      color: "#F59E0B",
-      subtitle: "Outstanding",
+      icon: <AccountBalance sx={{ fontSize: 42 }} />,
+      color: "#f59e0b",
     },
     {
-      title: "Citizens",
+      title: "Registered Citizens",
       value: dashboardSummary.total_citizens,
-      icon: <People sx={{ fontSize: 38 }} />,
-      color: "#8B5CF6",
-      subtitle: "Registered",
+      icon: <People sx={{ fontSize: 42 }} />,
+      color: "#a855f7",
     },
   ];
 
@@ -153,8 +143,8 @@ const AdminDashboard = () => {
           total_assets: Number(summary.total_assets || 0),
           partial_cases: Number(summary.partial_cases || 0),
         });
-        setWardCollection(ward);
 
+        setWardCollection(ward);
         setTaxCollection(tax);
       } catch (err) {
         console.error(err);
@@ -185,37 +175,25 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout sidebar={<AdminSidebar />} pageTitle="Dashboard">
-      <Box
-        sx={{
-          mb: 5,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Box>
-          <Typography variant="h4" fontWeight={700} color="white">
-            CTCS Enterprise Dashboard
-          </Typography>
-
-          <Typography
-            sx={{
-              color: "#94A3B8",
-              mt: 1,
-            }}
-          >
-            Centralized Municipal Revenue Management System
-          </Typography>
-        </Box>
-
-        <Chip
-          label="LIVE"
-          color="success"
+      <Box sx={{ mb: 4 }}>
+        <Typography
+          variant="h4"
           sx={{
+            color: "white",
             fontWeight: 700,
-            px: 2,
           }}
-        />
+        >
+          CTCS Enterprise Platform{" "}
+        </Typography>
+
+        <Typography
+          sx={{
+            color: "#94a3b8",
+            mt: 1,
+          }}
+        >
+          Centralized Municipal Revenue Management & Tax Administration System
+        </Typography>
       </Box>
 
       <Grid container spacing={3}>
@@ -223,90 +201,107 @@ const AdminDashboard = () => {
           <Grid key={card.title} xs={12} md={6} lg={3}>
             <Card
               sx={{
-                borderRadius: 4,
-                background: "linear-gradient(145deg,#17263f,#132238)",
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
+
+                backdropFilter: "blur(20px)",
+
+                border: "1px solid rgba(255,255,255,0.08)",
+
                 color: "white",
-                border: "1px solid rgba(255,255,255,.05)",
-                transition: ".25s",
+
+                borderRadius: 4,
+
+                transition: "0.3s",
+
                 "&:hover": {
-                  transform: "translateY(-4px)",
-                  boxShadow: "0 15px 35px rgba(0,0,0,.25)",
+                  transform: "translateY(-6px)",
                 },
               }}
             >
               <CardContent>
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
                 >
                   <Box>
-                    <Typography color="#94A3B8" variant="body2">
+                    <Typography
+                      sx={{
+                        color: "#94a3b8",
+                      }}
+                    >
                       {card.title}
                     </Typography>
 
-                    <Typography variant="h4" fontWeight={700} mt={1}>
+                    <Typography
+                      variant="h4"
+                      sx={{
+                        mt: 1,
+                        fontWeight: 700,
+                      }}
+                    >
                       {card.value}
-                    </Typography>
-
-                    <Typography color="#64748B" variant="caption">
-                      {card.subtitle}
                     </Typography>
                   </Box>
 
                   <Box
                     sx={{
-                      width: 62,
-                      height: 62,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: `${card.color}20`,
                       color: card.color,
                     }}
                   >
                     {card.icon}
                   </Box>
-                </Stack>
+                </Box>
               </CardContent>
             </Card>
           </Grid>
         ))}
 
-        <Grid item xs={12} lg={8}>
+        <Grid xs={12} lg={8}>
           <Card
             sx={{
-              background: "#16233d",
+              background:
+                "linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+
+              minHeight: 350,
+
+              color: "white",
+
               borderRadius: 4,
-              border: "1px solid rgba(255,255,255,.05)",
             }}
           >
             <CardContent>
-              <Typography variant="h5" fontWeight={700} color="white" mb={3}>
+              <Typography variant="h6" sx={{ mb: 3 }}>
                 Revenue Analytics
               </Typography>
 
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <Typography color="#94A3B8" mb={2}>
+              <Grid container spacing={12}>
+                <Grid xs={12} md={6}>
+                  <Typography
+                    sx={{
+                      color: "#94a3b8",
+                      mb: 1,
+                    }}
+                  >
                     Collection by Tax Type
                   </Typography>
 
-                  <Box
-                    sx={{
-                      height: 300,
-                    }}
-                  >
-                    <ResponsiveContainer>
+                  {taxCollection.length > 0 ? (
+                    <ResponsiveContainer width={200} height={300}>
                       <PieChart>
                         <Pie
                           data={taxCollection}
-                          dataKey="amount"
+                          dataKey="total_collection"
                           nameKey="tax_name"
-                          innerRadius={65}
-                          outerRadius={105}
-                          paddingAngle={2}
+                          outerRadius={95}
+                          innerRadius={45}
+                          paddingAngle={3}
+                          label={({ percent }) =>
+                            `${(percent * 100).toFixed(0)}%`
+                          }
                         >
                           {taxCollection.map((entry, index) => (
                             <Cell
@@ -315,117 +310,88 @@ const AdminDashboard = () => {
                             />
                           ))}
                         </Pie>
-
-                        <Tooltip formatter={(v) => formatCurrency(v)} />
-
+                        <Tooltip
+                          contentStyle={{
+                            background: "#17233c",
+                            border: "none",
+                            color: "white",
+                          }}
+                        />
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
-                  </Box>
+                  ) : (
+                    <Typography color="#94a3b8">
+                      No collection data available.
+                    </Typography>
+                  )}
                 </Grid>
 
-                <Grid item xs={12} md={6}>
-                  <Typography color="#94A3B8" mb={2}>
-                    Collection by Ward
-                  </Typography>
-
-                  <Box
+                <Grid xs={12} md={6}>
+                  <Typography
                     sx={{
-                      height: 300,
+                      color: "#94a3b8",
+                      mb: 1,
                     }}
                   >
-                    <ResponsiveContainer>
-                      <BarChart
-                        data={wardCollection}
-                        margin={{
-                          top: 10,
-                          right: 10,
-                          left: 0,
-                          bottom: 0,
-                        }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    Collection by Ward
+                  </Typography>
+                  {taxCollection.length > 0 ? (
+                    <ResponsiveContainer width={220}>
+                      <BarChart data={wardCollection}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#23314f" />
 
-                        <XAxis dataKey="ward_name" stroke="#94A3B8" />
-
-                        <YAxis
-                          stroke="#94A3B8"
-                          tickFormatter={(v) => `${Math.round(v / 1000)}K`}
+                        <XAxis
+                          dataKey="ward_number"
+                          tick={{ fill: "#94a3b8" }}
                         />
 
-                        <Tooltip formatter={(v) => formatCurrency(v)} />
+                        <YAxis tick={{ fill: "#94a3b8" }} />
+
+                        <Tooltip
+                          contentStyle={{
+                            background: "#17233c",
+                            border: "none",
+                            color: "white",
+                          }}
+                        />
 
                         <Bar
-                          dataKey="amount"
+                          dataKey="total_collection"
                           radius={[8, 8, 0, 0]}
-                          fill="#3B82F6"
+                          fill="#3b82f6"
                         />
                       </BarChart>
                     </ResponsiveContainer>
-                  </Box>
-                </Grid>
-              </Grid>
-
-              <Divider
-                sx={{
-                  my: 4,
-                  borderColor: "rgba(255,255,255,.08)",
-                }}
-              />
-
-              <Grid container spacing={2}>
-                <Grid item xs={6} md={3}>
-                  <Typography color="#64748B">Collection Efficiency</Typography>
-
-                  <Typography variant="h5" fontWeight={700} color="#22c55e">
-                    {calculateCollectionEfficiency(dashboardSummary)}%
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={6} md={3}>
-                  <Typography color="#64748B">Average Assessment</Typography>
-
-                  <Typography variant="h5" fontWeight={700} color="white">
-                    {formatCurrency(averageAssessment(dashboardSummary))}
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={6} md={3}>
-                  <Typography color="#64748B">Partial Payments</Typography>
-
-                  <Typography variant="h5" fontWeight={700} color="#f59e0b">
-                    {dashboardSummary.partial_cases}
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={6} md={3}>
-                  <Typography color="#64748B">Assets</Typography>
-
-                  <Typography variant="h5" fontWeight={700} color="#60a5fa">
-                    {dashboardSummary.total_assets}
-                  </Typography>
+                  ) : (
+                    <Typography color="#94a3b8">
+                      No collection data available.
+                    </Typography>
+                  )}
                 </Grid>
               </Grid>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid item xs={12} lg={4}>
+        <Grid xs={12} lg={4}>
           <Card
             sx={{
-              height: "100%",
-              background: "#16233d",
+              background:
+                "linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+
+              minHeight: 350,
+
+              color: "white",
+
               borderRadius: 4,
-              border: "1px solid rgba(255,255,255,.05)",
+               border: "1px solid rgba(255,255,255,.05)",
             }}
           >
             <CardContent>
-              <Typography variant="h5" fontWeight={700} color="white" mb={3}>
-                Live System Insights
-              </Typography>
-
-              <Stack spacing={2.2}>
-                <Box
+              <Typography variant="h6" mb={3}>System Insights</Typography>
+ <Stack spacing={2.5}>
+              <Box
                   sx={{
                     display: "flex",
                     justifyContent: "space-between",
@@ -542,7 +508,7 @@ const AdminDashboard = () => {
                     {formatCurrency(averageAssessment(dashboardSummary))}
                   </Typography>
                 </Box>
-              </Stack>
+                </Stack>
             </CardContent>
           </Card>
         </Grid>
