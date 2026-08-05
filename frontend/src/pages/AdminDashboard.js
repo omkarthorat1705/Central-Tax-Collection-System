@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getRevenueSummary } from "../services/dashboardService";
 
 import {
   Box,
@@ -41,17 +42,23 @@ const AdminDashboard = () => {
     loading,
   } = useAppData();
 
-  const dashboardSummary = {
-    total_assessment: assetTypes.length,
+  const navigate = useNavigate();
+
+  const [dashboardSummary, setDashboardSummary] = useState({
+    total_assessments: 0,
     total_collection: 0,
     total_pending: 0,
-    partial_cases: citizens.length,
-  };
+    total_citizens: 0,
+    total_assets: 0,
+    partial_cases: 0,
+  });
 
-  const cards = [
+const [dashboardLoading, setDashboardLoading] = useState(true);
+
+    const cards = [
     {
       title: "Total Assessments",
-      value: dashboardSummary.total_assessment,
+      value: dashboardSummary.total_assessments,
       icon: <Assessment sx={{ fontSize: 42 }} />,
       color: "#38bdf8",
     },
@@ -69,102 +76,36 @@ const AdminDashboard = () => {
     },
     {
       title: "Registered Citizens",
-      value: citizens.length,
+      value: dashboardSummary.total_citizens,
       icon: <People sx={{ fontSize: 42 }} />,
       color: "#a855f7",
     },
   ];
 
-  const navigate = useNavigate();
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        const data = await getRevenueSummary();
 
-  // const user = JSON.parse(localStorage.getItem("user")) || {};
+        setDashboardSummary({
+          total_assessments: Number(data.total_assessments || 0),
+          total_collection: Number(data.total_collection || 0),
+          total_pending: Number(data.total_pending || 0),
+          total_citizens: Number(data.total_citizens || 0),
+          total_assets: Number(data.total_assets || 0),
+          partial_cases: Number(data.partial_cases || 0),
+        });
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setDashboardLoading(false);
+      }
+    };
 
-  // const handleLogout = () => {
-  //   localStorage.removeItem("token");
-  //   localStorage.removeItem("user");
+    loadDashboard();
+  }, []);
 
-  //   navigate("/login");
-  // };
-
-  // const header = (
-  //   <Box
-  //     sx={{
-  //       display: "flex",
-  //       justifyContent: "space-between",
-  //       alignItems: "center",
-  //       width: "100%",
-  //     }}
-  //   >
-  //     <Typography
-  //       variant="h5"
-  //       sx={{
-  //         color: "white",
-  //         fontWeight: 700,
-  //       }}
-  //     >
-  //       Revenue Administration Dashboard
-  //     </Typography>
-
-  //     <Box
-  //       sx={{
-  //         display: "flex",
-  //         alignItems: "center",
-  //         gap: 3,
-  //       }}
-  //     >
-  //       <Box>
-  //         <Typography
-  //           sx={{
-  //             color: "white",
-  //             fontWeight: 700,
-  //           }}
-  //         >
-  //           {user.tenant_name}
-  //         </Typography>
-
-  //         <Typography
-  //           sx={{
-  //             color: "#94a3b8",
-  //             fontSize: 13,
-  //           }}
-  //         >
-  //           Authority Code: {user.tenant_code}
-  //         </Typography>
-  //       </Box>
-
-  //       <Box>
-  //         <Typography
-  //           sx={{
-  //             color: "white",
-  //             fontWeight: 600,
-  //           }}
-  //         >
-  //           {user.full_name}
-  //         </Typography>
-
-  //         <Typography
-  //           sx={{
-  //             color: "#94a3b8",
-  //             fontSize: 13,
-  //           }}
-  //         >
-  //           {user.role}
-  //         </Typography>
-  //       </Box>
-
-  //       <IconButton
-  //         onClick={handleLogout}
-  //         sx={{
-  //           color: "white",
-  //         }}
-  //       >
-  //         <LogoutIcon />
-  //       </IconButton>
-  //     </Box>
-  //   </Box>
-  // );
-
-  if (loading) {
+  if (loading || dashboardLoading) {
     return (
       <Box
         sx={{
