@@ -1,5 +1,23 @@
 import { useEffect, useState } from "react";
-import { getRevenueSummary } from "../services/dashboardService";
+import {
+  getRevenueSummary,
+  getWardWiseCollection,
+  getTaxWiseCollection,
+} from "../services/dashboardService";
+
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import {
   Box,
@@ -34,6 +52,15 @@ const formatCurrency = (amount) => {
   }).format(amount || 0);
 };
 
+const COLORS = [
+  "#3b82f6",
+  "#22c55e",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#06b6d4",
+];
+
 const AdminDashboard = () => {
   const {
     citizens = [],
@@ -53,9 +80,12 @@ const AdminDashboard = () => {
     partial_cases: 0,
   });
 
-const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [wardCollection, setWardCollection] = useState([]);
 
-    const cards = [
+  const [taxCollection, setTaxCollection] = useState([]);
+
+  const cards = [
     {
       title: "Total Assessments",
       value: dashboardSummary.total_assessments,
@@ -85,16 +115,23 @@ const [dashboardLoading, setDashboardLoading] = useState(true);
   useEffect(() => {
     const loadDashboard = async () => {
       try {
-        const data = await getRevenueSummary();
+        const [summary, ward, tax] = await Promise.all([
+          getRevenueSummary(),
+          getWardWiseCollection(),
+          getTaxWiseCollection(),
+        ]);
 
         setDashboardSummary({
-          total_assessments: Number(data.total_assessments || 0),
-          total_collection: Number(data.total_collection || 0),
-          total_pending: Number(data.total_pending || 0),
-          total_citizens: Number(data.total_citizens || 0),
-          total_assets: Number(data.total_assets || 0),
-          partial_cases: Number(data.partial_cases || 0),
+          total_assessments: Number(summary.total_assessments || 0),
+          total_collection: Number(summary.total_collection || 0),
+          total_pending: Number(summary.total_pending || 0),
+          total_citizens: Number(summary.total_citizens || 0),
+          total_assets: Number(summary.total_assets || 0),
+          partial_cases: Number(summary.partial_cases || 0),
         });
+        setWardCollection(ward);
+
+        setTaxCollection(tax);
       } catch (err) {
         console.error(err);
       } finally {
@@ -214,27 +251,109 @@ const [dashboardLoading, setDashboardLoading] = useState(true);
             sx={{
               background:
                 "linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
-
-              minHeight: 350,
-
-              color: "white",
-
               borderRadius: 4,
+              color: "white",
+              minHeight: 620,
             }}
           >
             <CardContent>
-              <Typography variant="h6">Revenue Analytics</Typography>
-
-              <Typography
-                sx={{
-                  mt: 2,
-                  color: "#94a3b8",
-                }}
-              >
-                Revenue charts, assessment trends, collection performance and
-                demand analysis will be integrated in the next phase using
-                Recharts.
+              <Typography variant="h6" sx={{ mb: 3 }}>
+                Revenue Analytics
               </Typography>
+
+              <Grid container spacing={3}>
+                <Grid xs={12} md={6}>
+                  <Typography
+                    sx={{
+                      color: "#94a3b8",
+                      mb: 1,
+                    }}
+                  >
+                    Collection by Tax Type
+                  </Typography>
+
+                  {taxCollection.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={260}>
+                      <PieChart>
+                        with
+                        <Pie
+                          data={taxCollection}
+                          dataKey="total_collection"
+                          nameKey="tax_name"
+                          outerRadius={95}
+                          innerRadius={45}
+                          paddingAngle={3}
+                          label={({ percent }) =>
+                            `${(percent * 100).toFixed(0)}%`
+                          }
+                        >
+                          {taxCollection.map((entry, index) => (
+                            <Cell
+                              key={index}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            background: "#17233c",
+                            border: "none",
+                            color: "white",
+                          }}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <Typography color="#94a3b8">
+                      No collection data available.
+                    </Typography>
+                  )}
+                </Grid>
+
+                <Grid xs={12} md={6}>
+                  <Typography
+                    sx={{
+                      color: "#94a3b8",
+                      mb: 1,
+                    }}
+                  >
+                    Collection by Ward
+                  </Typography>
+                  {taxCollection.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart data={wardCollection}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#23314f" />
+
+                        <XAxis
+                          dataKey="ward_number"
+                          tick={{ fill: "#94a3b8" }}
+                        />
+
+                        <YAxis tick={{ fill: "#94a3b8" }} />
+
+                        <Tooltip
+                          contentStyle={{
+                            background: "#17233c",
+                            border: "none",
+                            color: "white",
+                          }}
+                        />
+
+                        <Bar
+                          dataKey="total_collection"
+                          radius={[8, 8, 0, 0]}
+                          fill="#3b82f6"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <Typography color="#94a3b8">
+                      No collection data available.
+                    </Typography>
+                  )}
+                </Grid>
+              </Grid>
             </CardContent>
           </Card>
         </Grid>

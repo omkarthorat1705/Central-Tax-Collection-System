@@ -1,7 +1,16 @@
 import API from "../api/api";
 
 export const getRevenueSummary = async () => {
-  const response = await API.get("/getRevenueSummary");
+  const { data } = await API.get("/getRevenueSummary");
+  return data.data;
+};
 
-  return response.data.data;
+export const getWardWiseCollection = async () => {
+  const { data } = await API.get("/getWardWiseCollection");
+  return data.data;
+};
+
+export const getTaxWiseCollection = async () => {
+  const { data } = await API.get("/getTaxWiseCollection");
+  return data.data;
 };
