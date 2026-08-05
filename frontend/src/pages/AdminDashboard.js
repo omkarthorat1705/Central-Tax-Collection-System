@@ -26,6 +26,9 @@ import {
   CardContent,
   Typography,
   CircularProgress,
+  Divider,
+  Stack,
+  Chip,
 } from "@mui/material";
 
 import {
@@ -53,13 +56,30 @@ const formatCurrency = (amount) => {
 };
 
 const COLORS = [
-  "#3b82f6",
-  "#22c55e",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#06b6d4",
+  "#3B82F6",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#8B5CF6",
+  "#06B6D4",
+  "#14B8A6",
+  "#F97316",
 ];
+
+const calculateCollectionEfficiency = (summary) => {
+  const total =
+    Number(summary.total_collection || 0) + Number(summary.total_pending || 0);
+
+  if (!total) return 0;
+
+  return ((summary.total_collection / total) * 100).toFixed(1);
+};
+
+const averageAssessment = (summary) => {
+  if (!summary.total_assessments) return 0;
+
+  return Number(summary.total_pending || 0) / Number(summary.total_assessments);
+};
 
 const AdminDashboard = () => {
   const {
@@ -87,28 +107,32 @@ const AdminDashboard = () => {
 
   const cards = [
     {
-      title: "Total Assessments",
+      title: "Assessments",
       value: dashboardSummary.total_assessments,
-      icon: <Assessment sx={{ fontSize: 42 }} />,
-      color: "#38bdf8",
+      icon: <Assessment sx={{ fontSize: 38 }} />,
+      color: "#3B82F6",
+      subtitle: "Generated",
     },
     {
-      title: "Revenue Collected",
+      title: "Revenue",
       value: formatCurrency(dashboardSummary.total_collection),
-      icon: <Payments sx={{ fontSize: 42 }} />,
-      color: "#22c55e",
+      icon: <Payments sx={{ fontSize: 38 }} />,
+      color: "#10B981",
+      subtitle: "Collected",
     },
     {
-      title: "Pending Revenue",
+      title: "Pending",
       value: formatCurrency(dashboardSummary.total_pending),
-      icon: <AccountBalance sx={{ fontSize: 42 }} />,
-      color: "#f59e0b",
+      icon: <AccountBalance sx={{ fontSize: 38 }} />,
+      color: "#F59E0B",
+      subtitle: "Outstanding",
     },
     {
-      title: "Registered Citizens",
+      title: "Citizens",
       value: dashboardSummary.total_citizens,
-      icon: <People sx={{ fontSize: 42 }} />,
-      color: "#a855f7",
+      icon: <People sx={{ fontSize: 38 }} />,
+      color: "#8B5CF6",
+      subtitle: "Registered",
     },
   ];
 
@@ -161,25 +185,37 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout sidebar={<AdminSidebar />} pageTitle="Dashboard">
-      <Box sx={{ mb: 4 }}>
-        <Typography
-          variant="h4"
-          sx={{
-            color: "white",
-            fontWeight: 700,
-          }}
-        >
-          CTCS Enterprise Platform{" "}
-        </Typography>
+      <Box
+        sx={{
+          mb: 5,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Box>
+          <Typography variant="h4" fontWeight={700} color="white">
+            CTCS Enterprise Dashboard
+          </Typography>
 
-        <Typography
+          <Typography
+            sx={{
+              color: "#94A3B8",
+              mt: 1,
+            }}
+          >
+            Centralized Municipal Revenue Management System
+          </Typography>
+        </Box>
+
+        <Chip
+          label="LIVE"
+          color="success"
           sx={{
-            color: "#94a3b8",
-            mt: 1,
+            fontWeight: 700,
+            px: 2,
           }}
-        >
-          Centralized Municipal Revenue Management & Tax Administration System
-        </Typography>
+        />
       </Box>
 
       <Grid container spacing={3}>
@@ -187,105 +223,90 @@ const AdminDashboard = () => {
           <Grid key={card.title} xs={12} md={6} lg={3}>
             <Card
               sx={{
-                background:
-                  "linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
-
-                backdropFilter: "blur(20px)",
-
-                border: "1px solid rgba(255,255,255,0.08)",
-
-                color: "white",
-
                 borderRadius: 4,
-
-                transition: "0.3s",
-
+                background: "linear-gradient(145deg,#17263f,#132238)",
+                color: "white",
+                border: "1px solid rgba(255,255,255,.05)",
+                transition: ".25s",
                 "&:hover": {
-                  transform: "translateY(-6px)",
+                  transform: "translateY(-4px)",
+                  boxShadow: "0 15px 35px rgba(0,0,0,.25)",
                 },
               }}
             >
               <CardContent>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
                 >
                   <Box>
-                    <Typography
-                      sx={{
-                        color: "#94a3b8",
-                      }}
-                    >
+                    <Typography color="#94A3B8" variant="body2">
                       {card.title}
                     </Typography>
 
-                    <Typography
-                      variant="h4"
-                      sx={{
-                        mt: 1,
-                        fontWeight: 700,
-                      }}
-                    >
+                    <Typography variant="h4" fontWeight={700} mt={1}>
                       {card.value}
+                    </Typography>
+
+                    <Typography color="#64748B" variant="caption">
+                      {card.subtitle}
                     </Typography>
                   </Box>
 
                   <Box
                     sx={{
+                      width: 62,
+                      height: 62,
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      bgcolor: `${card.color}20`,
                       color: card.color,
                     }}
                   >
                     {card.icon}
                   </Box>
-                </Box>
+                </Stack>
               </CardContent>
             </Card>
           </Grid>
         ))}
 
-        <Grid xs={12} lg={8}>
+        <Grid item xs={12} lg={8}>
           <Card
             sx={{
-              background:
-                "linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+              background: "#16233d",
               borderRadius: 4,
-              color: "white",
-              minHeight: 620,
+              border: "1px solid rgba(255,255,255,.05)",
             }}
           >
             <CardContent>
-              <Typography variant="h6" sx={{ mb: 3 }}>
+              <Typography variant="h5" fontWeight={700} color="white" mb={3}>
                 Revenue Analytics
               </Typography>
 
               <Grid container spacing={3}>
-                <Grid xs={12} md={6}>
-                  <Typography
-                    sx={{
-                      color: "#94a3b8",
-                      mb: 1,
-                    }}
-                  >
+                <Grid item xs={12} md={6}>
+                  <Typography color="#94A3B8" mb={2}>
                     Collection by Tax Type
                   </Typography>
 
-                  {taxCollection.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={260}>
+                  <Box
+                    sx={{
+                      height: 300,
+                    }}
+                  >
+                    <ResponsiveContainer>
                       <PieChart>
-                        with
                         <Pie
                           data={taxCollection}
-                          dataKey="total_collection"
+                          dataKey="amount"
                           nameKey="tax_name"
-                          outerRadius={95}
-                          innerRadius={45}
-                          paddingAngle={3}
-                          label={({ percent }) =>
-                            `${(percent * 100).toFixed(0)}%`
-                          }
+                          innerRadius={65}
+                          outerRadius={105}
+                          paddingAngle={2}
                         >
                           {taxCollection.map((entry, index) => (
                             <Cell
@@ -294,110 +315,234 @@ const AdminDashboard = () => {
                             />
                           ))}
                         </Pie>
-                        <Tooltip
-                          contentStyle={{
-                            background: "#17233c",
-                            border: "none",
-                            color: "white",
-                          }}
-                        />
+
+                        <Tooltip formatter={(v) => formatCurrency(v)} />
+
                         <Legend />
                       </PieChart>
                     </ResponsiveContainer>
-                  ) : (
-                    <Typography color="#94a3b8">
-                      No collection data available.
-                    </Typography>
-                  )}
+                  </Box>
                 </Grid>
 
-                <Grid xs={12} md={6}>
-                  <Typography
-                    sx={{
-                      color: "#94a3b8",
-                      mb: 1,
-                    }}
-                  >
+                <Grid item xs={12} md={6}>
+                  <Typography color="#94A3B8" mb={2}>
                     Collection by Ward
                   </Typography>
-                  {taxCollection.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={260}>
-                      <BarChart data={wardCollection}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#23314f" />
 
-                        <XAxis
-                          dataKey="ward_number"
-                          tick={{ fill: "#94a3b8" }}
+                  <Box
+                    sx={{
+                      height: 300,
+                    }}
+                  >
+                    <ResponsiveContainer>
+                      <BarChart
+                        data={wardCollection}
+                        margin={{
+                          top: 10,
+                          right: 10,
+                          left: 0,
+                          bottom: 0,
+                        }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+
+                        <XAxis dataKey="ward_name" stroke="#94A3B8" />
+
+                        <YAxis
+                          stroke="#94A3B8"
+                          tickFormatter={(v) => `${Math.round(v / 1000)}K`}
                         />
 
-                        <YAxis tick={{ fill: "#94a3b8" }} />
-
-                        <Tooltip
-                          contentStyle={{
-                            background: "#17233c",
-                            border: "none",
-                            color: "white",
-                          }}
-                        />
+                        <Tooltip formatter={(v) => formatCurrency(v)} />
 
                         <Bar
-                          dataKey="total_collection"
+                          dataKey="amount"
                           radius={[8, 8, 0, 0]}
-                          fill="#3b82f6"
+                          fill="#3B82F6"
                         />
                       </BarChart>
                     </ResponsiveContainer>
-                  ) : (
-                    <Typography color="#94a3b8">
-                      No collection data available.
-                    </Typography>
-                  )}
+                  </Box>
+                </Grid>
+              </Grid>
+
+              <Divider
+                sx={{
+                  my: 4,
+                  borderColor: "rgba(255,255,255,.08)",
+                }}
+              />
+
+              <Grid container spacing={2}>
+                <Grid item xs={6} md={3}>
+                  <Typography color="#64748B">Collection Efficiency</Typography>
+
+                  <Typography variant="h5" fontWeight={700} color="#22c55e">
+                    {calculateCollectionEfficiency(dashboardSummary)}%
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={6} md={3}>
+                  <Typography color="#64748B">Average Assessment</Typography>
+
+                  <Typography variant="h5" fontWeight={700} color="white">
+                    {formatCurrency(averageAssessment(dashboardSummary))}
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={6} md={3}>
+                  <Typography color="#64748B">Partial Payments</Typography>
+
+                  <Typography variant="h5" fontWeight={700} color="#f59e0b">
+                    {dashboardSummary.partial_cases}
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={6} md={3}>
+                  <Typography color="#64748B">Assets</Typography>
+
+                  <Typography variant="h5" fontWeight={700} color="#60a5fa">
+                    {dashboardSummary.total_assets}
+                  </Typography>
                 </Grid>
               </Grid>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid xs={12} lg={4}>
+        <Grid item xs={12} lg={4}>
           <Card
             sx={{
-              background:
-                "linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
-
-              minHeight: 350,
-
-              color: "white",
-
+              height: "100%",
+              background: "#16233d",
               borderRadius: 4,
+              border: "1px solid rgba(255,255,255,.05)",
             }}
           >
             <CardContent>
-              <Typography variant="h6">System Insights</Typography>
+              <Typography variant="h5" fontWeight={700} color="white" mb={3}>
+                Live System Insights
+              </Typography>
 
-              <Box sx={{ mt: 3 }}>
-                <Typography>• Active Tax Collection Cycle</Typography>
+              <Stack spacing={2.2}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography color="#94A3B8">Collection Efficiency</Typography>
 
-                <Typography sx={{ mt: 2 }}>
-                  • Revenue Monitoring Enabled
-                </Typography>
+                  <Typography fontWeight={700} color="#22C55E">
+                    {calculateCollectionEfficiency(dashboardSummary)}%
+                  </Typography>
+                </Box>
 
-                <Typography sx={{ mt: 2 }}>
-                  • Assessment Lifecycle Active
-                </Typography>
+                <Divider sx={{ borderColor: "#23324b" }} />
 
-                <Typography sx={{ mt: 2 }}>
-                  • Payment Engine Operational
-                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography color="#94A3B8">Revenue Collected</Typography>
 
-                <Typography sx={{ mt: 2 }}>
-                  • Multi-Tenant Security Enabled
-                </Typography>
+                  <Typography fontWeight={700} color="white">
+                    {formatCurrency(dashboardSummary.total_collection)}
+                  </Typography>
+                </Box>
 
-                <Typography sx={{ mt: 2 }}>
-                  • Live data refreshed across dashboard, tax, and citizen
-                  modules
-                </Typography>
-              </Box>
+                <Divider sx={{ borderColor: "#23324b" }} />
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography color="#94A3B8">Pending Revenue</Typography>
+
+                  <Typography fontWeight={700} color="#f59e0b">
+                    {formatCurrency(dashboardSummary.total_pending)}
+                  </Typography>
+                </Box>
+
+                <Divider sx={{ borderColor: "#23324b" }} />
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography color="#94A3B8">Assessments</Typography>
+
+                  <Typography fontWeight={700} color="white">
+                    {dashboardSummary.total_assessments}
+                  </Typography>
+                </Box>
+
+                <Divider sx={{ borderColor: "#23324b" }} />
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography color="#94A3B8">Registered Citizens</Typography>
+
+                  <Typography fontWeight={700} color="white">
+                    {dashboardSummary.total_citizens}
+                  </Typography>
+                </Box>
+
+                <Divider sx={{ borderColor: "#23324b" }} />
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography color="#94A3B8">Assets</Typography>
+
+                  <Typography fontWeight={700} color="white">
+                    {dashboardSummary.total_assets}
+                  </Typography>
+                </Box>
+
+                <Divider sx={{ borderColor: "#23324b" }} />
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography color="#94A3B8">Partial Payments</Typography>
+
+                  <Typography fontWeight={700} color="#3B82F6">
+                    {dashboardSummary.partial_cases}
+                  </Typography>
+                </Box>
+
+                <Divider sx={{ borderColor: "#23324b" }} />
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography color="#94A3B8">Average Assessment</Typography>
+
+                  <Typography fontWeight={700} color="white">
+                    {formatCurrency(averageAssessment(dashboardSummary))}
+                  </Typography>
+                </Box>
+              </Stack>
             </CardContent>
           </Card>
         </Grid>
