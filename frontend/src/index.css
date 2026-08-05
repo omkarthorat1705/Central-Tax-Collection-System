@@ -24,3 +24,46 @@ code {
 .MuiFormLabel-root {
   font-size: 0.92rem !important;
 }
+
+:root{
+    --primary:#2F6BFF;
+    --primary-hover:#2557d6;
+    --surface:#18233b;
+    --surface-light:#1e2b46;
+    --background:#0d1730;
+    --border:rgba(255,255,255,.08);
+    --text:#ffffff;
+    --text-secondary:#9aa8c7;
+    --success:#32d16d;
+    --warning:#ffb02e;
+    --danger:#ff5f56;
+
+    --radius:22px;
+
+    --shadow:
+        0 16px 40px rgba(0,0,0,.25);
+
+    --transition:.25s ease;
+}
+
+body{
+    background:var(--background);
+}
+
+.MuiPaper-root{
+    border-radius:22px!important;
+}
+
+.MuiButton-root{
+    border-radius:14px!important;
+    text-transform:none!important;
+    font-weight:600!important;
+}
+
+.MuiOutlinedInput-root{
+    border-radius:16px!important;
+}
+
+.MuiCard-root{
+    border-radius:22px!important;
+}

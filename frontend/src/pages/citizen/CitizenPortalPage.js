@@ -61,26 +61,26 @@ const CitizenPortalPage = () => {
         alert("Please fill all fields.");
         return;
       }
-const response = await API.post("/citizen/login", form);
+      const response = await API.post("/citizen/login", form);
 
-const loginData = response.data.data;
+      const loginData = response.data.data;
 
-localStorage.setItem("citizenToken", loginData.token);
-localStorage.setItem("citizen", JSON.stringify(loginData.citizen));
+      localStorage.setItem("citizenToken", loginData.token);
+      localStorage.setItem("citizen", JSON.stringify(loginData.citizen));
 
-setCitizen(loginData.citizen);
+      setCitizen(loginData.citizen);
 
-// IMPORTANT
-await new Promise((resolve) => setTimeout(resolve, 20));
+      // IMPORTANT
+      await new Promise((resolve) => setTimeout(resolve, 20));
 
-const portalResponse = await API.get("/citizen/portal");
+      const portalResponse = await API.get("/citizen/portal");
 
-setSummary(
-    portalResponse.data.data || {
-        assessments: [],
-        payments: [],
-    },
-);
+      setSummary(
+        portalResponse.data.data || {
+          assessments: [],
+          payments: [],
+        },
+      );
     } catch (error) {
       alert(error.response?.data?.error || "Citizen login failed");
     } finally {
@@ -165,6 +165,18 @@ setSummary(
 
     loadPortal();
   }, []);
+
+  const totalAssessment = summary.assessments.reduce(
+    (sum, item) => sum + Number(item.total_amount || 0),
+    0,
+  );
+
+  const totalPaid = summary.payments.reduce(
+    (sum, item) => sum + Number(item.payment_amount || 0),
+    0,
+  );
+
+  const outstanding = Math.max(0, totalAssessment - totalPaid);
 
   return (
     <Box
@@ -262,214 +274,148 @@ setSummary(
             </CardContent>
           </Card>
         ) : (
-          <Box>
+          <>
             <Box
               sx={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                mb: 3,
+                mb: 4,
               }}
             >
               <Box>
                 <Typography
                   variant="h4"
-                  sx={{ color: "white", fontWeight: 700 }}
+                  sx={{
+                    color: "#fff",
+                    fontWeight: 700,
+                  }}
                 >
-                  Welcome, {citizen.full_name}
+                  Citizen Dashboard
                 </Typography>
-                <Typography sx={{ color: "#94a3b8", mt: 0.5 }}>
-                  {citizen.tenant_name} • {citizen.citizen_code}
+
+                <Typography
+                  sx={{
+                    color: "#94a3b8",
+                    mt: 0.5,
+                  }}
+                >
+                  Welcome back,
+                  <strong> {citizen.full_name}</strong>
+                  {" • "}
+                  {citizen.citizen_code}
                 </Typography>
               </Box>
-              <Button variant="outlined" onClick={handleLogout}>
+
+              <Button variant="outlined" color="error" onClick={handleLogout}>
                 Logout
               </Button>
             </Box>
 
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={12} md={3}>
                 <Paper
                   sx={{
                     p: 3,
                     borderRadius: 3,
-                    background: "rgba(255,255,255,0.04)",
-                    mb: 2,
+                    background: "#132238",
                   }}
                 >
-                  <Typography sx={{ color: "white", fontWeight: 700, mb: 2 }}>
-                    Change Password
-                  </Typography>
-                  <Stack spacing={2}>
-                    <TextField
-                      label="Current Password"
-                      type="password"
-                      value={passwordForm.currentPassword}
-                      onChange={(event) =>
-                        setPasswordForm({
-                          ...passwordForm,
-                          currentPassword: event.target.value,
-                        })
-                      }
-                      fullWidth
-                    />
-                    <TextField
-                      label="New Password"
-                      type="password"
-                      value={passwordForm.newPassword}
-                      onChange={(event) =>
-                        setPasswordForm({
-                          ...passwordForm,
-                          newPassword: event.target.value,
-                        })
-                      }
-                      fullWidth
-                    />
-                    <Button
-                      variant="contained"
-                      size="large"
-                      fullWidth
-                      onClick={handlePasswordChange}
-                    >
-                      Update Password
-                    </Button>
-                  </Stack>
-                </Paper>
+                  <Typography color="#94a3b8">Outstanding Due</Typography>
 
-                <Paper
-                  sx={{
-                    p: 3,
-                    borderRadius: 3,
-                    background: "rgba(255,255,255,0.04)",
-                  }}
-                >
-                  <Typography sx={{ color: "white", fontWeight: 700, mb: 2 }}>
-                    Make Payment
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      color: "#ef4444",
+                      fontWeight: 700,
+                    }}
+                  >
+                    ₹
+                    {Math.max(
+                      0,
+                      summary.assessments.reduce(
+                        (t, a) => t + Number(a.total_amount || 0),
+                        0,
+                      ) -
+                        summary.payments.reduce(
+                          (t, p) => t + Number(p.payment_amount || 0),
+                          0,
+                        ),
+                    ).toFixed(2)}
                   </Typography>
-                  <Stack spacing={2}>
-                    <TextField
-                      label="Assessment ID"
-                      value={paymentForm.assessment_id}
-                      onChange={(event) =>
-                        setPaymentForm({
-                          ...paymentForm,
-                          assessment_id: event.target.value,
-                        })
-                      }
-                      fullWidth
-                    />
-                    <TextField
-                      label="Amount"
-                      value={paymentForm.payment_amount}
-                      onChange={(event) =>
-                        setPaymentForm({
-                          ...paymentForm,
-                          payment_amount: event.target.value,
-                        })
-                      }
-                      fullWidth
-                    />
-                    <TextField
-                      label="Payment Mode"
-                      value={paymentForm.payment_mode}
-                      onChange={(event) =>
-                        setPaymentForm({
-                          ...paymentForm,
-                          payment_mode: event.target.value,
-                        })
-                      }
-                      fullWidth
-                    />
-                    <Button
-                      variant="contained"
-                      size="large"
-                      fullWidth
-                      onClick={handlePayment}
-                    >
-                      Record Payment
-                    </Button>
-                  </Stack>
                 </Paper>
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={3}>
                 <Paper
                   sx={{
                     p: 3,
                     borderRadius: 3,
-                    background: "rgba(255,255,255,0.04)",
+                    background: "#132238",
                   }}
                 >
-                  <Typography sx={{ color: "white", fontWeight: 700, mb: 2 }}>
-                    Your Assessments
+                  <Typography color="#94a3b8">Assessments</Typography>
+
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      color: "#38bdf8",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {summary.assessments.length}
                   </Typography>
-                  {summary.assessments.length === 0 ? (
-                    <Typography sx={{ color: "#94a3b8" }}>
-                      No assessments found.
-                    </Typography>
-                  ) : (
-                    summary.assessments.map((item) => (
-                      <Box
-                        key={item.id}
-                        sx={{
-                          borderBottom: "1px solid rgba(255,255,255,0.08)",
-                          py: 1.5,
-                        }}
-                      >
-                        <Typography sx={{ color: "white" }}>
-                          {item.tax_name || "Tax"}
-                        </Typography>
-                        <Typography sx={{ color: "#94a3b8", fontSize: 13 }}>
-                          #{item.assessment_number} • {item.financial_year} • ₹
-                          {Number(item.total_amount || 0).toFixed(2)}
-                        </Typography>
-                        <Typography sx={{ color: "#38bdf8", fontSize: 13 }}>
-                          {item.assessment_status}
-                        </Typography>
-                      </Box>
-                    ))
-                  )}
                 </Paper>
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={3}>
                 <Paper
                   sx={{
                     p: 3,
                     borderRadius: 3,
-                    background: "rgba(255,255,255,0.04)",
+                    background: "#132238",
                   }}
                 >
-                  <Typography sx={{ color: "white", fontWeight: 700, mb: 2 }}>
-                    Recent Payments
+                  <Typography color="#94a3b8">Payments</Typography>
+
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      color: "#22c55e",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {summary.payments.length}
                   </Typography>
-                  {summary.payments.length === 0 ? (
-                    <Typography sx={{ color: "#94a3b8" }}>
-                      No payments found.
-                    </Typography>
-                  ) : (
-                    summary.payments.map((item) => (
-                      <Box
-                        key={item.id}
-                        sx={{
-                          borderBottom: "1px solid rgba(255,255,255,0.08)",
-                          py: 1.5,
-                        }}
-                      >
-                        <Typography sx={{ color: "white" }}>
-                          {item.payment_number}
-                        </Typography>
-                        <Typography sx={{ color: "#94a3b8", fontSize: 13 }}>
-                          {item.payment_mode} • ₹
-                          {Number(item.payment_amount || 0).toFixed(2)}
-                        </Typography>
-                      </Box>
-                    ))
-                  )}
+                </Paper>
+              </Grid>
+
+              <Grid item xs={12} md={3}>
+                <Paper
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    background: "#132238",
+                  }}
+                >
+                  <Typography color="#94a3b8">Amount Paid</Typography>
+
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      color: "#22c55e",
+                      fontWeight: 700,
+                    }}
+                  >
+                    ₹
+                    {summary.payments
+                      .reduce((t, p) => t + Number(p.payment_amount || 0), 0)
+                      .toFixed(2)}
+                  </Typography>
                 </Paper>
               </Grid>
             </Grid>
-          </Box>
+          </>
         )}
       </Container>
     </Box>

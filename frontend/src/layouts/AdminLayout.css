@@ -29,6 +29,12 @@ body {
   background: #06152f;
 }
 
+.admin-layout-main {
+  max-width: 1700px;
+  margin: auto;
+  padding: 32px 36px;
+}
+
 .admin-sidebar {
   width: clamp(220px, 14vw, 280px);
   flex-shrink: 0;
