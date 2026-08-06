@@ -27,7 +27,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import AdminLayout from "../../layouts/AdminLayout";
 import AdminSidebar from "../../components/AdminSidebar";
 import EnterpriseSectionCard from "../../components/enterprise/EnterpriseSectionCard";
-import EnterpriseSummaryPanel from "../../components/enterprise/EnterpriseSummaryPanel";
+import AssetSummaryPanel from "../../components/enterprise/AssetSummaryPanel";
 
 import assetService from "../../services/assetService";
 import { getCitizens } from "../../services/citizenService";
@@ -538,17 +538,18 @@ export default function CreateAssetPage() {
           </div>
 
           <div className="citizen-summary">
-            <EnterpriseSummaryPanel
+            <AssetSummaryPanel
               progress={progress}
-              citizenCode="AUTO-GENERATED"
-              status="ACTIVE"
-              verification="PENDING"
-              fullName={form.asset_name}
-              city={
-                assetTypes.find((item) => item.id === Number(form.asset_type))
-                  ?.asset_type_name || ""
+              assetName={form.asset_name}
+              assetType={form.asset_type}
+              citizen={
+                citizens.find(
+                  (c) => Number(c.citizen_id) === Number(form.citizen_id),
+                )?.full_name || ""
               }
-              mobile={selectedCitizen.full_name || ""}
+              selectedTaxes={selectedTaxes}
+              parameterCount={parameters.length}
+              currentStep={steps[activeStep]}
             />
           </div>
         </div>
